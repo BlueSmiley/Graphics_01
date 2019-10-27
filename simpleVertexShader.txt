@@ -2,7 +2,11 @@
 
 in vec3 vertex_position;
 in vec3 vertex_normal;
+in ivec4 bone_ids;
+in vec4 bone_weights; 
 
+
+const int MAX_BONES = 200;
 
 out vec3 LightIntensity;
 
@@ -14,24 +18,41 @@ vec3 Ld = vec3 (1.0, 1.0, 1.0); // Light source intensity
 uniform mat4 view;
 uniform mat4 proj;
 uniform mat4 model;
+//uniform mat4 bones[MAX_BONES];
 
 void main(){
+
+
+  //mat4 boneTransform = bones[bone_ids[0]] * bone_weights[0];
+  //boneTransform += bones[bone_ids[1]] * bone_weights[1];
+  //boneTransform += bones[bone_ids[2]] * bone_weights[2];
+  //boneTransform += bones[bone_ids[3]] * bone_weights[3];
+
+  mat4 identity;
+  identity[0] = vec4(1.0,0.0,0.0,0.0);
+  identity[1] = vec4(0.0,1.0,0.0,0.0);
+  identity[2] = vec4(0.0,0.0,1.0,0.0);
+  identity[3] = vec4(0.0,0.0,0.0,1.0);
+
 
   mat4 ModelViewMatrix = view * model;
   mat3 NormalMatrix =  mat3(ModelViewMatrix);
   // Convert normal and position to eye coords
   // Normal in view space
-  vec3 tnorm = normalize( NormalMatrix * vertex_normal);
+  vec4 tempNormals = identity * vec4(vertex_normal,1.0);
+  //vec4 tempNormals = boneTransform * vec4(vertex_normal,1.0);
+  vec3 tnorm = normalize( NormalMatrix  * tempNormals.xyz);
   // Position in view space
   vec4 eyeCoords = ModelViewMatrix * vec4(vertex_position,1.0);
   //normalised vector towards the light source
- vec3 s = normalize(vec3(LightPosition - eyeCoords));
+  vec3 s = normalize(vec3(LightPosition - eyeCoords));
   
   // The diffuse shading equation, dot product gives us the cosine of angle between the vectors
   LightIntensity = Ld * Kd * max( dot( s, tnorm ), 0.0 );
   
   // Convert position to clip coordinates and pass along
-  gl_Position = proj * view * model * vec4(vertex_position,1.0);
+   gl_Position = proj * view * model *  identity * vec4(vertex_position,1.0);
+   //gl_Position = proj * view * model * boneTransform * vec4(vertex_position,1.0);
 }
 
 

@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <iostream>
+#include <limits.h>
 #include <string>
 #include <stdio.h>
 #include <math.h>
@@ -11,13 +12,10 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 
-// Assimp includes
-#include <assimp/cimport.h> // scene importer
-#include <assimp/scene.h> // collects data
-#include <assimp/postprocess.h> // various extra operations
 
 // Project includes
 #include "maths_funcs.h"
+#include "Model.h"
 
 
 
@@ -26,243 +24,41 @@ MESH TO LOAD
 ----------------------------------------------------------------------------*/
 // this mesh is a dae file format but you should be able to use any other format too, obj is typically what is used
 // put the mesh in your project directory, or provide a filepath for it here
-#define MESH_NAME "Barrel.dae"
+#define MESH_NAME "free3Dmodel.dae"
+#define GROUND_MODEL "stage.obj"
+#define SWORD_MODEL "Master Sword.obj"
+#define SHIELD_MODEL "Zelda Hylian Shield.dae"
 /*----------------------------------------------------------------------------
 ----------------------------------------------------------------------------*/
 
-#pragma region SimpleTypes
-typedef struct
-{
-	size_t mPointCount = 0;
-	std::vector<vec3> mVertices;
-	std::vector<vec3> mNormals;
-	std::vector<vec2> mTextureCoords;
-} ModelData;
-#pragma endregion SimpleTypes
-
 using namespace std;
-GLuint shaderProgramID;
 
-ModelData mesh_data;
-unsigned int mesh_vao = 0;
+static const unsigned int MAX_BONES = 200;
+
+Model mainModel;
+Model groundModel;
+Model swordModel;
+Model shieldModel;
+
 int width = 800;
 int height = 600;
 float deltaTime;
-GLfloat rotateSpeed[] = { 2000.0f , 2000.0f , 2000.0f };
+GLfloat rotateSpeed[] = { 10.0f , 10.0f , 10.0f };
+GLfloat scalingSpeed[] = { 10.0f, 10.0f, 10.0f } ;
+GLfloat translationSpeed[] = { 10.0f, 10.0f, 10.0f };
 
-GLuint loc1, loc2, loc3;
-GLfloat rotations[] = { 0.0f , 0.0f, 0.0f };
-
-
-#pragma region MESH LOADING
-/*----------------------------------------------------------------------------
-MESH LOADING FUNCTION
-----------------------------------------------------------------------------*/
-
-ModelData load_mesh(const char* file_name) {
-	ModelData modelData;
-
-	/* Use assimp to read the model file, forcing it to be read as    */
-	/* triangles. The second flag (aiProcess_PreTransformVertices) is */
-	/* relevant if there are multiple meshes in the model file that   */
-	/* are offset from the origin. This is pre-transform them so      */
-	/* they're in the right position.                                 */
-	const aiScene* scene = aiImportFile(
-		file_name, 
-		aiProcess_Triangulate | aiProcess_PreTransformVertices
-	); 
-
-	if (!scene) {
-		fprintf(stderr, "ERROR: reading mesh %s\n", file_name);
-		return modelData;
-	}
-
-	printf("  %i materials\n", scene->mNumMaterials);
-	printf("  %i meshes\n", scene->mNumMeshes);
-	printf("  %i textures\n", scene->mNumTextures);
-
-	for (unsigned int m_i = 0; m_i < scene->mNumMeshes; m_i++) {
-		const aiMesh* mesh = scene->mMeshes[m_i];
-		printf("    %i vertices in mesh\n", mesh->mNumVertices);
-		modelData.mPointCount += mesh->mNumVertices;
-		for (unsigned int v_i = 0; v_i < mesh->mNumVertices; v_i++) {
-			if (mesh->HasPositions()) {
-				const aiVector3D* vp = &(mesh->mVertices[v_i]);
-				modelData.mVertices.push_back(vec3(vp->x, vp->y, vp->z));
-			}
-			if (mesh->HasNormals()) {
-				const aiVector3D* vn = &(mesh->mNormals[v_i]);
-				modelData.mNormals.push_back(vec3(vn->x, vn->y, vn->z));
-			}
-			if (mesh->HasTextureCoords(0)) {
-				const aiVector3D* vt = &(mesh->mTextureCoords[0][v_i]);
-				modelData.mTextureCoords.push_back(vec2(vt->x, vt->y));
-			}
-			if (mesh->HasTangentsAndBitangents()) {
-				/* You can extract tangents and bitangents here              */
-				/* Note that you might need to make Assimp generate this     */
-				/* data for you. Take a look at the flags that aiImportFile  */
-				/* can take.                                                 */
-			}
-		}
-	}
-
-	aiReleaseImport(scene);
-	return modelData;
-}
-
-#pragma endregion MESH LOADING
-
-// Shader Functions
-#pragma region SHADER_FUNCTIONS
-char* readShaderSource(const char* shaderFile) {
-	FILE* fp;
-	fopen_s(&fp, shaderFile, "rb");
-
-	if (fp == NULL) { return NULL; }
-
-	fseek(fp, 0L, SEEK_END);
-	long size = ftell(fp);
-
-	fseek(fp, 0L, SEEK_SET);
-	char* buf = new char[size + 1];
-	fread(buf, 1, size, fp);
-	buf[size] = '\0';
-
-	fclose(fp);
-
-	return buf;
-}
-
-
-static void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType)
-{
-	// create a shader object
-	GLuint ShaderObj = glCreateShader(ShaderType);
-
-	if (ShaderObj == 0) {
-		std::cerr << "Error creating shader..." << std::endl;
-		std::cerr << "Press enter/return to exit..." << std::endl;
-		std::cin.get();
-		exit(1);
-	}
-	const char* pShaderSource = readShaderSource(pShaderText);
-
-	// Bind the source code to the shader, this happens before compilation
-	glShaderSource(ShaderObj, 1, (const GLchar**)&pShaderSource, NULL);
-	// compile the shader and check for errors
-	glCompileShader(ShaderObj);
-	GLint success;
-	// check for shader related errors using glGetShaderiv
-	glGetShaderiv(ShaderObj, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		GLchar InfoLog[1024] = { '\0' };
-		glGetShaderInfoLog(ShaderObj, 1024, NULL, InfoLog);
-		std::cerr << "Error compiling "
-			<< (ShaderType == GL_VERTEX_SHADER ? "vertex" : "fragment")
-			<< " shader program: " << InfoLog << std::endl;
-		std::cerr << "Press enter/return to exit..." << std::endl;
-		std::cin.get();
-		exit(1);
-	}
-	// Attach the compiled shader object to the program object
-	glAttachShader(ShaderProgram, ShaderObj);
-}
-
-GLuint CompileShaders()
-{
-	//Start the process of setting up our shaders by creating a program ID
-	//Note: we will link all the shaders together into this ID
-	shaderProgramID = glCreateProgram();
-	if (shaderProgramID == 0) {
-		std::cerr << "Error creating shader program..." << std::endl;
-		std::cerr << "Press enter/return to exit..." << std::endl;
-		std::cin.get();
-		exit(1);
-	}
-
-	// Create two shader objects, one for the vertex, and one for the fragment shader
-	AddShader(shaderProgramID, "simpleVertexShader.txt", GL_VERTEX_SHADER);
-	AddShader(shaderProgramID, "simpleFragmentShader.txt", GL_FRAGMENT_SHADER);
-
-	GLint Success = 0;
-	GLchar ErrorLog[1024] = { '\0' };
-	// After compiling all shader objects and attaching them to the program, we can finally link it
-	glLinkProgram(shaderProgramID);
-	// check for program related errors using glGetProgramiv
-	glGetProgramiv(shaderProgramID, GL_LINK_STATUS, &Success);
-	if (Success == 0) {
-		glGetProgramInfoLog(shaderProgramID, sizeof(ErrorLog), NULL, ErrorLog);
-		std::cerr << "Error linking shader program: " << ErrorLog << std::endl;
-		std::cerr << "Press enter/return to exit..." << std::endl;
-		std::cin.get();
-		exit(1);
-	}
-
-	// program has been successfully linked but needs to be validated to check whether the program can execute given the current pipeline state
-	glValidateProgram(shaderProgramID);
-	// check for program related errors using glGetProgramiv
-	glGetProgramiv(shaderProgramID, GL_VALIDATE_STATUS, &Success);
-	if (!Success) {
-		glGetProgramInfoLog(shaderProgramID, sizeof(ErrorLog), NULL, ErrorLog);
-		std::cerr << "Invalid shader program: " << ErrorLog << std::endl;
-		std::cerr << "Press enter/return to exit..." << std::endl;
-		std::cin.get();
-		exit(1);
-	}
-	// Finally, use the linked shader program
-	// Note: this program will stay in effect for all draw calls until you replace it with another or explicitly disable its use
-	glUseProgram(shaderProgramID);
-	return shaderProgramID;
-}
-#pragma endregion SHADER_FUNCTIONS
-
-// VBO Functions 
-#pragma region VBO_FUNCTIONS
-void generateObjectBufferMesh() {
-	/*----------------------------------------------------------------------------
-	LOAD MESH HERE AND COPY INTO BUFFERS
-	----------------------------------------------------------------------------*/
-
-	//Note: you may get an error "vector subscript out of range" if you are using this code for a mesh that doesnt have positions and normals
-	//Might be an idea to do a check for that before generating and binding the buffer.
-
-	mesh_data = load_mesh(MESH_NAME);
-	unsigned int vp_vbo = 0;
-	loc1 = glGetAttribLocation(shaderProgramID, "vertex_position");
-	loc2 = glGetAttribLocation(shaderProgramID, "vertex_normal");
-	loc3 = glGetAttribLocation(shaderProgramID, "vertex_texture");
-
-	glGenBuffers(1, &vp_vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vp_vbo);
-	glBufferData(GL_ARRAY_BUFFER, mesh_data.mPointCount * sizeof(vec3), &mesh_data.mVertices[0], GL_STATIC_DRAW);
-	unsigned int vn_vbo = 0;
-	glGenBuffers(1, &vn_vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vn_vbo);
-	glBufferData(GL_ARRAY_BUFFER, mesh_data.mPointCount * sizeof(vec3), &mesh_data.mNormals[0], GL_STATIC_DRAW);
-
-	//	This is for texture coordinates which you don't currently need, so I have commented it out
-		unsigned int vt_vbo = 0;
-		glGenBuffers (1, &vt_vbo);
-		glBindBuffer (GL_ARRAY_BUFFER, vt_vbo);
-		glBufferData (GL_ARRAY_BUFFER, mesh_data.mPointCount * sizeof (vec2), &mesh_data.mTextureCoords[0], GL_STATIC_DRAW);
-
-	unsigned int vao = 0;
-	glBindVertexArray(vao);
-
-	glEnableVertexAttribArray(loc1);
-	glBindBuffer(GL_ARRAY_BUFFER, vp_vbo);
-	glVertexAttribPointer(loc1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	glEnableVertexAttribArray(loc2);
-	glBindBuffer(GL_ARRAY_BUFFER, vn_vbo);
-	glVertexAttribPointer(loc2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-	//	This is for texture coordinates which you don't currently need, so I have commented it out
-		glEnableVertexAttribArray (loc3);
-		glBindBuffer (GL_ARRAY_BUFFER, vt_vbo);
-		glVertexAttribPointer (loc3, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-}
-#pragma endregion VBO_FUNCTIONS
+GLfloat camera_pos[] = { 0.0f,0.0f,0.0f };
+GLfloat cameraTranslationSpeed[] = { 100.0f, 100.0f, 100.0f };
+GLfloat cameraRotationSpeed[] = { 1.0f, 1.0f, 1.0f };
+GLfloat camera_rotations[] = { 0.0f , 0.0f, 0.0f };
+GLfloat camera_orbit_rotations[] = { 0.0f , 0.0f, 0.0f };
+int prev_mousex = -100;
+int prev_mousey = -100;
+int mouse_dx = 0;
+int mouse_dy = 0;
+bool orbit = false;
+DWORD animStartTime;
+DWORD animRunningTime = 0;
 
 mat4 applyRotations(mat4 model, GLfloat rotations[]) {
 	mat4 tmp = model;
@@ -272,6 +68,138 @@ mat4 applyRotations(mat4 model, GLfloat rotations[]) {
 	return tmp;
 }
 
+mat4 calcModeltransform(Model model) {
+	mat4 transform = identity_mat4();
+	transform = scale(transform, vec3(model.scale[0], model.scale[1], model.scale[2]));
+	transform = applyRotations(transform, model.rotation);
+	transform = translate(transform, vec3(model.position[0], model.position[1], model.position[2]));
+	return transform;
+}
+
+mat4 setupCamera(Model focus) {
+	mat4 view = identity_mat4();
+	mat4 global = identity_mat4();
+
+	/*vec4 focusCenter = calcModeltransform(focus)*vec4(1.0f, 1.0f, 1.0f, 0.0f);
+	view = look_at(vec4(0.0f, 1.0f, -0.0f, 0.0f), focusCenter, vec3(0.0f, 1.0f, 0.0f));*/
+
+	view = applyRotations(view, camera_orbit_rotations);
+	view = translate(view, vec3(camera_pos[0], camera_pos[1], camera_pos[2] - 10.0f));
+	view = applyRotations(view, camera_rotations);
+	return view;
+}
+
+mat4 setupPerspective() {
+	mat4 persp_proj = perspective(90.0f, (float)width / (float)height, 0.1f, 1000.0f);
+	return persp_proj;
+}
+
+mat4 renderModelDynamic(Model model, mat4 view, mat4 projection,
+	GLfloat parScaling[], GLfloat parRotation[], GLfloat parTranslation[]) {
+
+	ModelData mesh_data = model.mesh;
+	GLuint shaderProgramID = model.shaderProgramID;
+	glUseProgram(shaderProgramID);
+	glBindVertexArray(model.vao);
+
+
+	//Declare your uniform variables that will be used in your shader
+	int matrix_location = glGetUniformLocation(shaderProgramID, "model");
+	int view_mat_location = glGetUniformLocation(shaderProgramID, "view");
+	int proj_mat_location = glGetUniformLocation(shaderProgramID, "proj");
+	int bones_mat_location = glGetUniformLocation(shaderProgramID, "bones");
+
+
+	// Root of the Hierarchy
+	mat4 global = identity_mat4();
+	mat4 transform = calcModeltransform(model);
+	global = scale(global, vec3(parScaling[0], parScaling[1], parScaling[2]));
+	global = applyRotations(global,parRotation);
+	global = translate(global, vec3(parTranslation[0], parTranslation[1], parTranslation[2]));
+	transform = global * transform;
+
+	// calculate bone transforms
+	//vector<mat4> boneTransforms;
+	//BoneTransform(&(mainModel.mesh), animRunningTime, boneTransforms);
+	////printf("%d\n", animRunningTime);
+	//for (int tmp = 0; tmp < boneTransforms.size(); tmp++) {
+	//	//print(boneTransforms[tmp]);
+	//	//printf("Newline\n");
+	//}
+
+	// update uniforms & draw
+	glUniformMatrix4fv(proj_mat_location, 1, GL_FALSE, projection.m);
+	glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, view.m);
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, transform.m);
+
+
+	//GLuint m_boneLocation[MAX_BONES];
+	//for (unsigned int i = 0; i < MAX_BONES; i++) {
+	//	char Name[128];
+	//	memset(Name, 0, sizeof(Name));
+	//	snprintf(Name, sizeof(Name), "bones[%d]", i);
+	//	m_boneLocation[i] = glGetUniformLocation(shaderProgramID,Name);
+	//}
+	//for (unsigned int i = 0; i < boneTransforms.size() && i < MAX_BONES; i++) {
+	//	glUniformMatrix4fv(m_boneLocation[i], 1, GL_FALSE,boneTransforms[i].m);
+	//	//printf("%d\n",boneTransforms[i]);
+	//}
+
+	glDrawArrays(GL_TRIANGLES, 0, mesh_data.mPointCount);
+	return transform;
+}
+
+mat4 renderModel(Model model, mat4 view, mat4 projection) {
+	ModelData mesh_data = model.mesh;
+	GLuint shaderProgramID = model.shaderProgramID;
+	glUseProgram(shaderProgramID);
+	glBindVertexArray(model.vao);
+
+
+	//Declare your uniform variables that will be used in your shader
+	int matrix_location = glGetUniformLocation(shaderProgramID, "model");
+	int view_mat_location = glGetUniformLocation(shaderProgramID, "view");
+	int proj_mat_location = glGetUniformLocation(shaderProgramID, "proj");
+	int bones_mat_location = glGetUniformLocation(shaderProgramID, "bones");
+
+
+	// Root of the Hierarchy
+	mat4 transform = identity_mat4();
+	transform = scale(transform, vec3(model.scale[0], model.scale[1], model.scale[2]));
+	transform = applyRotations(transform, model.rotation);
+	transform = translate(transform, vec3(model.position[0], model.position[1], model.position[2]));
+
+	// calculate bone transforms
+	//vector<mat4> boneTransforms;
+	//BoneTransform(&(mainModel.mesh), animRunningTime, boneTransforms);
+	////printf("%d\n", animRunningTime);
+	//for (int tmp = 0; tmp < boneTransforms.size(); tmp++) {
+	//	//print(boneTransforms[tmp]);
+	//	//printf("Newline\n");
+	//}
+
+	// update uniforms & draw
+	glUniformMatrix4fv(proj_mat_location, 1, GL_FALSE, projection.m);
+	glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, view.m);
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, transform.m);
+
+
+	//GLuint m_boneLocation[MAX_BONES];
+	//for (unsigned int i = 0; i < MAX_BONES; i++) {
+	//	char Name[128];
+	//	memset(Name, 0, sizeof(Name));
+	//	snprintf(Name, sizeof(Name), "bones[%d]", i);
+	//	m_boneLocation[i] = glGetUniformLocation(shaderProgramID,Name);
+	//}
+	//for (unsigned int i = 0; i < boneTransforms.size() && i < MAX_BONES; i++) {
+	//	glUniformMatrix4fv(m_boneLocation[i], 1, GL_FALSE,boneTransforms[i].m);
+	//	//printf("%d\n",boneTransforms[i]);
+	//}
+
+	glDrawArrays(GL_TRIANGLES, 0, mesh_data.mPointCount);
+	return transform;
+}
+
 void display() {
 
 	// tell GL to only draw onto a pixel if the shape is closer to the viewer
@@ -279,42 +207,15 @@ void display() {
 	glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glUseProgram(shaderProgramID);
 
+	mat4 view = setupCamera(mainModel);
+	mat4 proj = setupPerspective();
 
-	//Declare your uniform variables that will be used in your shader
-	int matrix_location = glGetUniformLocation(shaderProgramID, "model");
-	int view_mat_location = glGetUniformLocation(shaderProgramID, "view");
-	int proj_mat_location = glGetUniformLocation(shaderProgramID, "proj");
+	mat4 model = renderModel(mainModel, view, proj);
 
-
-	// Root of the Hierarchy
-	mat4 view = identity_mat4();
-	mat4 persp_proj = perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
-	mat4 model = identity_mat4();
-	//model = scale(model, vec3(0.05, 0.05, 0.05));
-	//model = rotate_z_deg(model, rotations[2]);
-	model = applyRotations(model, rotations);
-	view = translate(view, vec3(0.0, 0.0, -10.0f));
-
-	// update uniforms & draw
-	glUniformMatrix4fv(proj_mat_location, 1, GL_FALSE, persp_proj.m);
-	glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, view.m);
-	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, model.m);
-	glDrawArrays(GL_TRIANGLES, 0, mesh_data.mPointCount);
-
-	// Set up the child matrix
-	mat4 modelChild = identity_mat4();
-	modelChild = rotate_z_deg(modelChild, 180);
-	modelChild = rotate_y_deg(modelChild, rotations[2]);
-	modelChild = translate(modelChild, vec3(0.0f, 1.9f, 0.0f));
-
-	// Apply the root matrix to the child matrix
-	modelChild = model * modelChild;
-
-	// Update the appropriate uniform and draw the mesh again
-	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, modelChild.m);
-	glDrawArrays(GL_TRIANGLES, 0, mesh_data.mPointCount);
+	//renderModel(groundModel, view, proj);
+	renderModelDynamic(swordModel, view, proj, mainModel.scale,mainModel.rotation,mainModel.position);
+	renderModelDynamic(shieldModel, view, proj, mainModel.scale, mainModel.rotation, mainModel.position);
 
 	glutSwapBuffers();
 }
@@ -330,6 +231,7 @@ void updateScene() {
 	deltaTime = (curr_time - last_time) * 0.001f;
 	last_time = curr_time;
 
+	animRunningTime = (timeGetTime() - animStartTime)/1000.0f;
 	// Rotate the model slowly around the y axis at 20 degrees per second
 	//rotate_y += 20.0f * deltaTime;
 	//rotate_y = fmodf(rotate_y, 360.0f);
@@ -342,32 +244,175 @@ void updateScene() {
 void init()
 {
 	// Set up the shaders
-	GLuint shaderProgramID = CompileShaders();
+	GLuint shaderProgramID = CompileShaders("simpleVertexShader.txt", "simpleFragmentShader.txt");
+	mainModel.shaderProgramID = shaderProgramID;
+	mainModel.mesh = load_mesh(MESH_NAME);
 	// load mesh into a vertex buffer array
-	generateObjectBufferMesh();
+	generateObjectBufferMesh(&mainModel);
+
+	
+	groundModel.shaderProgramID = shaderProgramID;
+	groundModel.mesh = load_mesh(GROUND_MODEL);
+	generateObjectBufferMesh(&groundModel);
+
+
+	swordModel.shaderProgramID = shaderProgramID;
+	swordModel.mesh = load_mesh(SWORD_MODEL);
+	generateObjectBufferMesh(&swordModel);
+
+	shieldModel.shaderProgramID = shaderProgramID;
+	shieldModel.mesh = load_mesh(SHIELD_MODEL);
+	generateObjectBufferMesh(&shieldModel);
+
+	animStartTime = timeGetTime();
+
+	mainModel.position[1] -= 5;
+
+	groundModel.scale[0] *= 2;
+	groundModel.scale[1] *= 2;
+	groundModel.scale[2] *= 2;
+	groundModel.position[1] -= 8;
+
+	swordModel.scale[0] *= 0.5;
+	swordModel.scale[1] *= 0.5;
+	swordModel.scale[2] *= 0.5;
+	//swordModel.position[1] -= 3;
+	// To move it to roughly the arm length
+	swordModel.position[0] -= 2.5;
+	// To offset the main model being dragged down to the floor
+	swordModel.position[1] += 5;
+
+
+	shieldModel.scale[0] *= 0.002;
+	shieldModel.scale[1] *= 0.002;
+	shieldModel.scale[2] *= 0.002;
+	// Flip shield to face correct direction
+	shieldModel.rotation[1] += 180;
+	// Roughly arm length displacement
+	shieldModel.position[0] += 2.5;
+	// Offset being dropped to floor
+	shieldModel.position[1] += 5;
 
 }
 
+#pragma region INPUT_FUNCTIONS
 // Placeholder code for the keypress
 void keypress(unsigned char key, int x, int y) {
 	if (key == 'q') {
 		//Translate the base, etc.
-		rotations[0] += rotateSpeed[0] * deltaTime;
-		rotations[0] = fmodf(rotations[0], 360.0f);
+		mainModel.rotation[0] += rotateSpeed[0] * deltaTime;
+		mainModel.rotation[0] = fmodf(mainModel.rotation[0], 360.0f);
 	}
 	if (key == 'w') {
-		rotations[1] += -rotateSpeed[1] * deltaTime;
-		rotations[1] = fmodf(rotations[1], 360.0f);
+		mainModel.rotation[1] += rotateSpeed[1] * deltaTime;
+		mainModel.rotation[1] = fmodf(mainModel.rotation[1], 360.0f);
 	}
 	if (key == 'e') {
-		rotations[2] += -rotateSpeed[2] * deltaTime;
-		rotations[2] = fmodf(rotations[2], 360.0f);
+		mainModel.rotation[2] += rotateSpeed[2] * deltaTime;
+		mainModel.rotation[2] = fmodf(mainModel.rotation[2], 360.0f);
+	}
+	if (key == 'a') {
+		//Scale in each axis.
+		mainModel.scale[0] += scalingSpeed[0] * deltaTime;
+	}
+	if (key == 's') {
+		mainModel.scale[1] += scalingSpeed[1] * deltaTime;
+	}
+	if (key == 'd') {
+		mainModel.scale[2] += scalingSpeed[2] * deltaTime;
+	}
+	if (key == 'f') {
+		mainModel.scale[0] -= scalingSpeed[0] * deltaTime;
+		mainModel.scale[1] -= scalingSpeed[1] * deltaTime;
+		mainModel.scale[2] -= scalingSpeed[2] * deltaTime;
+	}
+
+	if (key == 'z') {
+		//translate in each axis.
+		mainModel.position[0] += translationSpeed[0] * deltaTime;
+	}
+	if (key == 'x') {
+		mainModel.position[1] += translationSpeed[1] * deltaTime;
+	}
+	if (key == 'c') {
+		mainModel.position[2] += translationSpeed[2] * deltaTime;
+	}
+	if (key == 'v') {
+		//Scale in each axis.
+		mainModel.position[0] -= translationSpeed[0] * deltaTime;
+	}
+	if (key == 'b') {
+		mainModel.position[1] -= translationSpeed[1] * deltaTime;
+	}
+	if (key == 'n') {
+		mainModel.position[2] -= translationSpeed[2] * deltaTime;
+	}
+
+	if (key == 'o') {
+		orbit = !orbit;
 	}
 
 	// Draw the next frame
 	glutPostRedisplay();
 
 }
+
+void specialKeyboard(int key, int x, int y) {
+	switch (key)
+	{
+	case GLUT_KEY_UP:
+		camera_pos[2] += cameraTranslationSpeed[2] * deltaTime;
+		break;
+	case GLUT_KEY_DOWN:
+		camera_pos[2] -= cameraTranslationSpeed[2] * deltaTime;
+		break;
+	case GLUT_KEY_LEFT:
+		camera_pos[0] -= cameraTranslationSpeed[0] * deltaTime;
+		break;
+	case GLUT_KEY_RIGHT:
+		camera_pos[0] += cameraTranslationSpeed[0] * deltaTime;
+		break;
+	default:
+		break;
+	}
+	glutPostRedisplay();
+}
+
+void mouseMove(int x, int y) {
+	if(prev_mousex != -100)
+		mouse_dx = prev_mousex - x;
+	prev_mousex = x;
+	if (prev_mousey != -100)
+		mouse_dy = prev_mousey - y;
+	prev_mousey = y;
+	GLfloat* camera_rotations_used;
+	if (orbit)
+		camera_rotations_used = camera_orbit_rotations;
+	else
+		camera_rotations_used = camera_rotations;
+	camera_rotations_used[1] += mouse_dx*cameraRotationSpeed[1];
+	camera_rotations_used[0] += mouse_dy* cameraRotationSpeed[0];
+	glutPostRedisplay();
+}
+
+void mouse(int button, int state, int x, int y)
+{
+	// Save the left button state
+	if (button == GLUT_LEFT_BUTTON)
+	{
+		if (state == GLUT_DOWN) {
+			prev_mousex = x;
+			prev_mousey = y;
+		}
+		else{
+			prev_mousex = -100;
+			prev_mousey = -100;
+		}
+	}
+}
+#pragma endregion INPUT_FUNCTIONS
+
+
 
 int main(int argc, char** argv) {
 
@@ -381,6 +426,9 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(display);
 	glutIdleFunc(updateScene);
 	glutKeyboardFunc(keypress);
+	glutSpecialFunc(specialKeyboard);
+	glutMotionFunc(mouseMove);
+	glutMouseFunc(mouse);
 
 	// A call to glewInit() must be done after glut is initialized!
 	GLenum res = glewInit();
