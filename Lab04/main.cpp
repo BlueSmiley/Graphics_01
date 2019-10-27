@@ -35,6 +35,16 @@ using namespace std;
 
 static const unsigned int MAX_BONES = 200;
 
+struct Animator {
+	bool start = false;
+	float elapsed = 0.0f;
+	GLfloat preRotation[3];
+	GLfloat preTranslation[3];
+	GLfloat preScaling[3];
+	float playTime;
+};
+
+
 Model mainModel;
 Model groundModel;
 Model swordModel;
@@ -47,8 +57,8 @@ GLfloat rotateSpeed[] = { 10.0f , 10.0f , 10.0f };
 GLfloat scalingSpeed[] = { 10.0f, 10.0f, 10.0f } ;
 GLfloat translationSpeed[] = { 10.0f, 10.0f, 10.0f };
 
-GLfloat camera_pos[] = { 0.0f,0.0f,0.0f };
-GLfloat cameraTranslationSpeed[] = { 100.0f, 100.0f, 100.0f };
+GLfloat camera_pos[] = { 0.0f,0.0f,-10.0f };
+GLfloat cameraTranslationSpeed[] = { 10.0f, 10.0f, 10.0f };
 GLfloat cameraRotationSpeed[] = { 1.0f, 1.0f, 1.0f };
 GLfloat camera_rotations[] = { 0.0f , 0.0f, 0.0f };
 GLfloat camera_orbit_rotations[] = { 0.0f , 0.0f, 0.0f };
@@ -59,6 +69,8 @@ int mouse_dy = 0;
 bool orbit = false;
 DWORD animStartTime;
 DWORD animRunningTime = 0;
+Animator block;
+Animator attack;
 
 mat4 applyRotations(mat4 model, GLfloat rotations[]) {
 	mat4 tmp = model;
@@ -66,6 +78,12 @@ mat4 applyRotations(mat4 model, GLfloat rotations[]) {
 	tmp = rotate_y_deg(tmp, rotations[1]);
 	tmp = rotate_z_deg(tmp, rotations[2]);
 	return tmp;
+}
+
+void copyFloatArrays(GLfloat mat1[3], GLfloat mat2[3]) {
+	for (int i = 0; i < 3; i++) {
+		mat1[i] = mat2[i];
+	}
 }
 
 mat4 calcModeltransform(Model model) {
@@ -78,19 +96,22 @@ mat4 calcModeltransform(Model model) {
 
 mat4 setupCamera(Model focus) {
 	mat4 view = identity_mat4();
-	mat4 global = identity_mat4();
 
+	mat4 focusTransform = calcModeltransform(focus);
 	/*vec4 focusCenter = calcModeltransform(focus)*vec4(1.0f, 1.0f, 1.0f, 0.0f);
 	view = look_at(vec4(0.0f, 1.0f, -0.0f, 0.0f), focusCenter, vec3(0.0f, 1.0f, 0.0f));*/
 
 	view = applyRotations(view, camera_orbit_rotations);
-	view = translate(view, vec3(camera_pos[0], camera_pos[1], camera_pos[2] - 10.0f));
+	view = translate(view, vec3(camera_pos[0], camera_pos[1], camera_pos[2]));
 	view = applyRotations(view, camera_rotations);
+	//print(view);
+	view = translate(view, vec3(focus.position[0], -focus.position[1], focus.position[2]));
+	//print(view);
 	return view;
 }
 
 mat4 setupPerspective() {
-	mat4 persp_proj = perspective(90.0f, (float)width / (float)height, 0.1f, 1000.0f);
+	mat4 persp_proj = perspective(75.0f, (float)width / (float)height, 0.1f, 1000.0f);
 	return persp_proj;
 }
 
@@ -213,13 +234,48 @@ void display() {
 
 	mat4 model = renderModel(mainModel, view, proj);
 
-	//renderModel(groundModel, view, proj);
+	renderModel(groundModel, view, proj);
 	renderModelDynamic(swordModel, view, proj, mainModel.scale,mainModel.rotation,mainModel.position);
 	renderModelDynamic(shieldModel, view, proj, mainModel.scale, mainModel.rotation, mainModel.position);
 
 	glutSwapBuffers();
 }
 
+void playBlockAnim(Model *model) {
+	model->rotation[2] += 50.0f;
+}
+
+void playAttackAnim(Model *model) {
+	model->rotation[0] += 50.0f;
+}
+
+void playAnims() {
+	if (block.start) {
+		playBlockAnim(&shieldModel);
+		block.elapsed += deltaTime;
+		if (block.elapsed > block.playTime) {
+			// Copy back array data to pre-animation transforms
+			copyFloatArrays(shieldModel.rotation, block.preRotation);
+			copyFloatArrays(shieldModel.position, block.preTranslation);
+			copyFloatArrays(shieldModel.scale, block.preScaling);
+			block.start = false;
+			block.elapsed = 0.0f;
+		}
+	}
+
+	if (attack.start) {
+		playAttackAnim(&swordModel);
+		attack.elapsed += deltaTime;
+		if (attack.elapsed > attack.playTime) {
+			// Copy back array data to pre-animation transforms
+			copyFloatArrays(swordModel.rotation, attack.preRotation);
+			copyFloatArrays(swordModel.position, attack.preTranslation);
+			copyFloatArrays(swordModel.scale, attack.preScaling);
+			attack.start = false;
+			attack.elapsed = 0.0f;
+		}
+	}
+}
 
 void updateScene() {
 
@@ -230,6 +286,8 @@ void updateScene() {
 		last_time = curr_time;
 	deltaTime = (curr_time - last_time) * 0.001f;
 	last_time = curr_time;
+
+	playAnims();
 
 	animRunningTime = (timeGetTime() - animStartTime)/1000.0f;
 	// Rotate the model slowly around the y axis at 20 degrees per second
@@ -243,6 +301,9 @@ void updateScene() {
 
 void init()
 {
+
+	attack.playTime = 2;
+	block.playTime = 2;
 	// Set up the shaders
 	GLuint shaderProgramID = CompileShaders("simpleVertexShader.txt", "simpleFragmentShader.txt");
 	mainModel.shaderProgramID = shaderProgramID;
@@ -268,10 +329,10 @@ void init()
 
 	mainModel.position[1] -= 5;
 
-	groundModel.scale[0] *= 2;
-	groundModel.scale[1] *= 2;
-	groundModel.scale[2] *= 2;
-	groundModel.position[1] -= 8;
+	groundModel.scale[0] *= 3;
+	groundModel.scale[1] *= 3;
+	groundModel.scale[2] *= 3;
+	groundModel.position[1] -= 10;
 
 	swordModel.scale[0] *= 0.5;
 	swordModel.scale[1] *= 0.5;
@@ -293,60 +354,100 @@ void init()
 	// Offset being dropped to floor
 	shieldModel.position[1] += 5;
 
+
+	camera_pos[1] -=  5.0f;
+	camera_pos[2] += 20.0f;
+	// Flip camera
+	camera_rotations[1] += 180.0f;
+	//camera_orbit_rotations[0] -= 45.0f;
+
+}
+
+void playAnim(Animator &block, Model &model) {
+	// if animation is already playing don't replace transforms
+	if (!(block.start)) {
+		copyFloatArrays(block.preRotation, model.rotation);
+		copyFloatArrays(block.preTranslation, model.position);
+		copyFloatArrays(block.preScaling, model.scale);
+	}
+	block.start = true;
+	block.elapsed = 0.0f;
 }
 
 #pragma region INPUT_FUNCTIONS
 // Placeholder code for the keypress
 void keypress(unsigned char key, int x, int y) {
-	if (key == 'q') {
-		//Translate the base, etc.
-		mainModel.rotation[0] += rotateSpeed[0] * deltaTime;
-		mainModel.rotation[0] = fmodf(mainModel.rotation[0], 360.0f);
-	}
-	if (key == 'w') {
-		mainModel.rotation[1] += rotateSpeed[1] * deltaTime;
-		mainModel.rotation[1] = fmodf(mainModel.rotation[1], 360.0f);
-	}
-	if (key == 'e') {
-		mainModel.rotation[2] += rotateSpeed[2] * deltaTime;
-		mainModel.rotation[2] = fmodf(mainModel.rotation[2], 360.0f);
-	}
-	if (key == 'a') {
-		//Scale in each axis.
-		mainModel.scale[0] += scalingSpeed[0] * deltaTime;
-	}
-	if (key == 's') {
-		mainModel.scale[1] += scalingSpeed[1] * deltaTime;
-	}
-	if (key == 'd') {
-		mainModel.scale[2] += scalingSpeed[2] * deltaTime;
-	}
-	if (key == 'f') {
-		mainModel.scale[0] -= scalingSpeed[0] * deltaTime;
-		mainModel.scale[1] -= scalingSpeed[1] * deltaTime;
-		mainModel.scale[2] -= scalingSpeed[2] * deltaTime;
-	}
 
-	if (key == 'z') {
-		//translate in each axis.
-		mainModel.position[0] += translationSpeed[0] * deltaTime;
-	}
-	if (key == 'x') {
-		mainModel.position[1] += translationSpeed[1] * deltaTime;
-	}
-	if (key == 'c') {
+	if (key == 'w') {
 		mainModel.position[2] += translationSpeed[2] * deltaTime;
 	}
-	if (key == 'v') {
-		//Scale in each axis.
-		mainModel.position[0] -= translationSpeed[0] * deltaTime;
-	}
-	if (key == 'b') {
-		mainModel.position[1] -= translationSpeed[1] * deltaTime;
-	}
-	if (key == 'n') {
+	if (key == 's') {
 		mainModel.position[2] -= translationSpeed[2] * deltaTime;
 	}
+	if (key == 'a') {
+		mainModel.position[0] += translationSpeed[0] * deltaTime;
+	}
+	if (key == 'd') {
+		mainModel.position[0] -= translationSpeed[0] * deltaTime;
+	}
+
+	if (key == 'b') {
+		playAnim(block,shieldModel);
+	}
+	if (key == 'n') {
+		playAnim(attack, swordModel);
+	}
+
+
+	//if (key == 'q') {
+	//	//Translate the base, etc.
+	//	mainModel.rotation[0] += rotateSpeed[0] * deltaTime;
+	//	mainModel.rotation[0] = fmodf(mainModel.rotation[0], 360.0f);
+	//}
+	//if (key == 'w') {
+	//	mainModel.rotation[1] += rotateSpeed[1] * deltaTime;
+	//	mainModel.rotation[1] = fmodf(mainModel.rotation[1], 360.0f);
+	//}
+	//if (key == 'e') {
+	//	mainModel.rotation[2] += rotateSpeed[2] * deltaTime;
+	//	mainModel.rotation[2] = fmodf(mainModel.rotation[2], 360.0f);
+	//}
+	//if (key == 'a') {
+	//	//Scale in each axis.
+	//	mainModel.scale[0] += scalingSpeed[0] * deltaTime;
+	//}
+	//if (key == 's') {
+	//	mainModel.scale[1] += scalingSpeed[1] * deltaTime;
+	//}
+	//if (key == 'd') {
+	//	mainModel.scale[2] += scalingSpeed[2] * deltaTime;
+	//}
+	//if (key == 'f') {
+	//	mainModel.scale[0] -= scalingSpeed[0] * deltaTime;
+	//	mainModel.scale[1] -= scalingSpeed[1] * deltaTime;
+	//	mainModel.scale[2] -= scalingSpeed[2] * deltaTime;
+	//}
+
+	//if (key == 'z') {
+	//	//translate in each axis.
+	//	mainModel.position[0] += translationSpeed[0] * deltaTime;
+	//}
+	//if (key == 'x') {
+	//	mainModel.position[1] += translationSpeed[1] * deltaTime;
+	//}
+	//if (key == 'c') {
+	//	mainModel.position[2] += translationSpeed[2] * deltaTime;
+	//}
+	//if (key == 'v') {
+	//	//Scale in each axis.
+	//	mainModel.position[0] -= translationSpeed[0] * deltaTime;
+	//}
+	//if (key == 'b') {
+	//	mainModel.position[1] -= translationSpeed[1] * deltaTime;
+	//}
+	//if (key == 'n') {
+	//	mainModel.position[2] -= translationSpeed[2] * deltaTime;
+	//}
 
 	if (key == 'o') {
 		orbit = !orbit;
@@ -361,10 +462,10 @@ void specialKeyboard(int key, int x, int y) {
 	switch (key)
 	{
 	case GLUT_KEY_UP:
-		camera_pos[2] += cameraTranslationSpeed[2] * deltaTime;
+		camera_pos[2] -= cameraTranslationSpeed[2] * deltaTime;
 		break;
 	case GLUT_KEY_DOWN:
-		camera_pos[2] -= cameraTranslationSpeed[2] * deltaTime;
+		camera_pos[2] += cameraTranslationSpeed[2] * deltaTime;
 		break;
 	case GLUT_KEY_LEFT:
 		camera_pos[0] -= cameraTranslationSpeed[0] * deltaTime;
@@ -390,8 +491,8 @@ void mouseMove(int x, int y) {
 		camera_rotations_used = camera_orbit_rotations;
 	else
 		camera_rotations_used = camera_rotations;
-	camera_rotations_used[1] += mouse_dx*cameraRotationSpeed[1];
-	camera_rotations_used[0] += mouse_dy* cameraRotationSpeed[0];
+	camera_rotations_used[1] -= mouse_dx*cameraRotationSpeed[1] * deltaTime;;
+	camera_rotations_used[0] += mouse_dy* cameraRotationSpeed[0] * deltaTime;;
 	glutPostRedisplay();
 }
 
@@ -410,6 +511,9 @@ void mouse(int button, int state, int x, int y)
 		}
 	}
 }
+
+
+
 #pragma endregion INPUT_FUNCTIONS
 
 
