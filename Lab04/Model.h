@@ -5,6 +5,7 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include <vector>
+#include <map>
 #include "maths_funcs.h"
 #include <array>
 #include <assimp/cimport.h> // scene importer
@@ -14,6 +15,7 @@
 struct Model;
 struct ModelData;
 struct VertexBoneData;
+struct BoneInfo;
 
 struct VertexBoneData
 {
@@ -21,18 +23,11 @@ struct VertexBoneData
 	float Weights[4];
 };
 
-struct ModelData
-{
-	const aiScene* scene;
-	size_t mPointCount = 0;
-	size_t mBoneCount = 0;
-	std::vector<vec3> mVertices;
-	std::vector<vec3> mNormals;
-	std::vector<vec2> mTextureCoords;
-	// Lets say each vertex can be affected by at max 4 bones-follwing two == vector<VertexBoneData>
-	std::vector<VertexBoneData> Bones;
+struct Texture {
+	unsigned int id;
+	std::string type;
+	std::string path;
 };
-
 
 struct BoneInfo {
 	mat4 inverseBindPoseTransform;
@@ -45,6 +40,30 @@ struct BoneInfo {
 	}
 };
 
+struct ModelData
+{
+	std::vector<std::map<std::string, aiNodeAnim*>> mAnimNodeVector;
+	const aiScene* scene;
+	size_t mPointCount = 0;
+	size_t mBoneCount = 0;
+	std::vector<vec3> mVertices;
+	std::vector<vec3> mNormals;
+	std::vector<vec2> mTextureCoords;
+	std::vector<Texture> mTextures;
+	// Lets say each vertex can be affected by at max 4 bones-follwing two == vector<VertexBoneData>
+	std::vector<VertexBoneData> Bones;
+	std::map<std::string, unsigned int> m_BoneMapping; // maps a bone name to its index
+	mat4 m_GlobalInverseTransform;
+	std::vector<unsigned int> m_Entries;
+	std::vector<BoneInfo> m_BoneInfo;
+};
+
+struct BoundingBox {
+	// By default initialise to zero
+	vec4 top_vertex = vec4(0.0f,0.0f,0.0f,1.0f);
+	vec4 bottom_vertex = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+};
+
 struct Model {
 	ModelData mesh;
 	GLuint shaderProgramID;
@@ -52,6 +71,16 @@ struct Model {
 	GLfloat rotation[3] = { 0.0f,0.0f,0.0f };
 	GLfloat scale[3] = { 1.0f,1.0f,1.0f };
 	GLfloat position[3] = { 0.0f,0.0f,0.0f };
+	std::vector<BoundingBox> hitbox;
+	std::vector<BoundingBox> preTransformedHitboxes;
+	bool gravityEnabled = false;
+};
+
+struct SkyBox {
+	unsigned int textureID;
+	GLuint shaderProgramID;
+	GLuint vao;
+	size_t mPointCount = 0;
 };
 
 ModelData load_mesh(const char* file_name);
@@ -69,6 +98,12 @@ VertexBoneData addBoneData(VertexBoneData boneData, unsigned int boneID, float w
 void CalcInterpolatedPosition(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
 void CalcInterpolatedRotation(aiQuaternion& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
 void CalcInterpolatedScaling(aiVector3D& Out, float AnimationTime, const aiNodeAnim* pNodeAnim);
+std::vector<Texture> loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName);
+unsigned int TextureFromFile(const char *path, const std::string &directory, bool gamma = false);
 
+unsigned int loadCubemap(std::vector<std::string> faces);
+void generateSkyBoxBufferMesh(SkyBox *sky);
+
+mat4 convertMat3to4(mat3 org);
 
 #endif

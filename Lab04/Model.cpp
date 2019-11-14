@@ -8,10 +8,10 @@
 #include <map>
 #include <array>
 
-std::vector<BoneInfo> m_BoneInfo;
-mat4 m_GlobalInverseTransform;
-std::map<std::string, unsigned int> m_BoneMapping; // maps a bone name to its index
-std::vector<unsigned int> m_Entries;
+// Also define for including stb_imae
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 
 // Im a big dumb an d this might not work
 inline mat4 aiMatrix4x4ToMath(const aiMatrix4x4* from)
@@ -24,7 +24,6 @@ inline mat4 aiMatrix4x4ToMath(const aiMatrix4x4* from)
 	return to;
 }
 
-//this is probably it 
 //inline mat4 aiMatrix4x4ToMath(const aiMatrix4x4* from)
 //{
 //	mat4 to = mat4(
@@ -38,18 +37,21 @@ inline mat4 aiMatrix4x4ToMath(const aiMatrix4x4* from)
 inline mat3 aiMatrix3x3ToMath(const aiMatrix3x3* from)
 {
 	mat3 to = mat3(
-		(GLfloat)from->a1, (GLfloat)from->b1, (GLfloat)from->c1,
-		(GLfloat)from->a2, (GLfloat)from->b2, (GLfloat)from->c2,
-		(GLfloat)from->a3, (GLfloat)from->b3, (GLfloat)from->c3);
+		(GLfloat)from->a1, (GLfloat)from->a2, (GLfloat)from->a3,
+		(GLfloat)from->b1, (GLfloat)from->b2, (GLfloat)from->b3,
+		(GLfloat)from->c1, (GLfloat)from->c2, (GLfloat)from->c3);
 	return to;
 }
 
-void mat4Printer(mat4 matrice) {
-	float* mat = matrice.m;
-	for (int i = 0; i < 16; i += 4) {
-		printf(" %f %f %f %f \n", mat[i], mat[i + 1], mat[i + 2], mat[i + 3]);
-	}
-}
+//
+//inline mat3 aiMatrix3x3ToMath(const aiMatrix3x3* from)
+//{
+//	mat3 to = mat3(
+//		(GLfloat)from->a1, (GLfloat)from->b1, (GLfloat)from->c1,
+//		(GLfloat)from->a2, (GLfloat)from->b2, (GLfloat)from->c2,
+//		(GLfloat)from->a3, (GLfloat)from->b3, (GLfloat)from->c3);
+//	return to;
+//}
 
 mat4 convertMat3to4(mat3 org) {
 	float* m = org.m;
@@ -62,6 +64,18 @@ mat4 convertMat3to4(mat3 org) {
 	return transpose(newM);
 }
 
+void printAssimpMatrix4x4(const aiMatrix4x4* from) {
+	printf("%f %f %f %f\n", (GLfloat)from->a1, (GLfloat)from->a2, (GLfloat)from->a3, (GLfloat)from->a4);
+	printf("%f %f %f %f\n", (GLfloat)from->b1, (GLfloat)from->b2, (GLfloat)from->b3, (GLfloat)from->b4);
+	printf("%f %f %f %f\n", (GLfloat)from->c1, (GLfloat)from->c2, (GLfloat)from->c3, (GLfloat)from->c4);
+	printf("%f %f %f %f\n", (GLfloat)from->d1, (GLfloat)from->d2, (GLfloat)from->d3, (GLfloat)from->d4);
+}
+
+void printAssimpMatrix3x3(const aiMatrix3x3* from) {
+	printf("%f %f %f %f\n", (GLfloat)from->a1, (GLfloat)from->a2, (GLfloat)from->a3);
+	printf("%f %f %f %f\n", (GLfloat)from->b1, (GLfloat)from->b2, (GLfloat)from->b3);
+	printf("%f %f %f %f\n", (GLfloat)from->c1, (GLfloat)from->c2, (GLfloat)from->c3);
+}
 
 // tries to fill 4 most influential bones
 VertexBoneData addBoneData(VertexBoneData boneData, unsigned int boneID, float weight) {
@@ -98,7 +112,7 @@ ModelData load_mesh(const char* file_name) {
 	modelData.scene = aiImportFile(
 		file_name,
 		aiProcess_Triangulate |aiProcess_GenSmoothNormals |
-		aiProcess_FlipUVs | aiProcess_PreTransformVertices | aiProcess_LimitBoneWeights
+		aiProcess_FlipUVs  | aiProcess_LimitBoneWeights
 	);
 	const aiScene* scene = modelData.scene;
 
@@ -110,13 +124,20 @@ ModelData load_mesh(const char* file_name) {
 	printf("  %i materials\n", scene->mNumMaterials);
 	printf("  %i meshes\n", scene->mNumMeshes);
 	printf("  %i textures\n", scene->mNumTextures);
+	
 
-	m_GlobalInverseTransform = aiMatrix4x4ToMath(&(scene->mRootNode->mTransformation));
-	m_GlobalInverseTransform = inverse(m_GlobalInverseTransform);
-	//mat4Printer(m_GlobalInverseTransform);
+	modelData.m_GlobalInverseTransform = aiMatrix4x4ToMath(&(scene->mRootNode->mTransformation));
+	//printAssimpMatrix4x4(&(scene->mRootNode->mTransformation));
+	//printf("Global transform");
+	//m_GlobalInverseTransform = rotate_x_deg(m_GlobalInverseTransform, 180);
+	//m_GlobalInverseTransform = rotate_y_deg(m_GlobalInverseTransform, 180);
+	//m_GlobalInverseTransform = rotate_z_deg(m_GlobalInverseTransform, -90);
+	//print(m_GlobalInverseTransform);
+	//modelData.m_GlobalInverseTransform = inverse(modelData.m_GlobalInverseTransform);
+	//print(m_GlobalInverseTransform);
 
 	unsigned int vertexCount = 0;
-	m_Entries.resize(scene->mNumMeshes);
+	modelData.m_Entries.resize(scene->mNumMeshes);
 	
 
 	for (unsigned int m_i = 0; m_i < scene->mNumMeshes; m_i++) {
@@ -137,11 +158,24 @@ ModelData load_mesh(const char* file_name) {
 				const aiVector3D* vt = &(mesh->mTextureCoords[0][v_i]);
 				modelData.mTextureCoords.push_back(vec2(vt->x, vt->y));
 			}
+			else {
+				modelData.mTextureCoords.push_back(vec2());
+			}
 			if (mesh->HasTangentsAndBitangents()) {
 				/* You can extract tangents and bitangents here              */
 				/* Note that you might need to make Assimp generate this     */
 				/* data for you. Take a look at the flags that aiImportFile  */
 				/* can take.                                                 */
+			}
+			if (mesh->mMaterialIndex >= 0)
+			{
+				aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+				std::vector<Texture> diffuseMaps = loadMaterialTextures(material,
+					aiTextureType_DIFFUSE, "texture_diffuse");
+				modelData.mTextures.insert(modelData.mTextures.end(), diffuseMaps.begin(), diffuseMaps.end());
+				std::vector<Texture> specularMaps = loadMaterialTextures(material,
+					aiTextureType_SPECULAR, "texture_specular");
+				modelData.mTextures.insert(modelData.mTextures.end(), specularMaps.begin(), specularMaps.end());
 			}
 
 		}
@@ -151,31 +185,31 @@ ModelData load_mesh(const char* file_name) {
 	// Need to do after as any bone can refer to any vertice, even unprocecessed ones maybe
 	// So reserve space in advance
 	modelData.Bones.resize(modelData.mPointCount);
+	unsigned int boneCount = 0;
 	for (unsigned int m_i = 0; m_i < scene->mNumMeshes; m_i++) {
-		m_Entries[m_i] = vertexCount;
+		modelData.m_Entries[m_i] = vertexCount;
 		const aiMesh* mesh = scene->mMeshes[m_i];
 		vertexCount += mesh->mNumVertices;
-		unsigned int boneCount = 0;
 		for (unsigned int b_i = 0; b_i < mesh->mNumBones; b_i++) {
 
 			unsigned int boneIndex = 0;
 			std::string BoneName(mesh->mBones[b_i]->mName.data);
 
-			if (m_BoneMapping.find(BoneName) == m_BoneMapping.end()) {
+			if (modelData.m_BoneMapping.find(BoneName) == modelData.m_BoneMapping.end()) {
 				// Allocate an index for a new bone
 				boneIndex = boneCount;
-				m_BoneMapping[BoneName] = boneIndex;
+				modelData.m_BoneMapping[BoneName] = boneIndex;
 				boneCount++;
 				BoneInfo bi;
-				m_BoneInfo.push_back(bi);
-				m_BoneInfo[boneIndex].inverseBindPoseTransform = aiMatrix4x4ToMath(&(mesh->mBones[b_i]->mOffsetMatrix));
+				modelData.m_BoneInfo.push_back(bi);
+				modelData.m_BoneInfo[boneIndex].inverseBindPoseTransform = aiMatrix4x4ToMath(&(mesh->mBones[b_i]->mOffsetMatrix));
 			}
 			else {
-				boneIndex = m_BoneMapping[BoneName];
+				boneIndex = modelData.m_BoneMapping[BoneName];
 			}
 
 			for (unsigned int j = 0; j < mesh->mBones[b_i]->mNumWeights; j++) {
-				unsigned int VertexID = m_Entries[m_i] + mesh->mBones[b_i]->mWeights[j].mVertexId;
+				unsigned int VertexID = modelData.m_Entries[m_i] + mesh->mBones[b_i]->mWeights[j].mVertexId;
 				float boneWeight = mesh->mBones[b_i]->mWeights[j].mWeight;
 				VertexBoneData boneData = modelData.Bones[VertexID];
 				modelData.Bones[VertexID] = addBoneData(boneData, boneIndex, boneWeight);
@@ -185,8 +219,26 @@ ModelData load_mesh(const char* file_name) {
 
 
 		}
-		modelData.mBoneCount = boneCount;
 	}
+	modelData.mBoneCount = boneCount;
+
+	for (int i = 0; i < scene->mNumAnimations; i++) {
+		aiAnimation* pAnimation = scene->mAnimations[i];
+		std::map<std::string, aiNodeAnim*> nodeMapping;
+		for (unsigned int j = 0; j < pAnimation->mNumChannels; j++) {
+			aiNodeAnim* pNodeAnim = pAnimation->mChannels[j];
+
+			if (nodeMapping.find(std::string(pNodeAnim->mNodeName.data)) == nodeMapping.end()) {
+				nodeMapping[std::string(pNodeAnim->mNodeName.data)] = pNodeAnim;
+			}
+		}
+		modelData.mAnimNodeVector.push_back(nodeMapping);
+	}
+
+	//for (int j = 0; j < modelData.mTextureCoords.size(); j++) {
+	//	//std::cout << "Loading:" << file_name << std::endl;
+	//	print(modelData.mTextureCoords[j]);
+	//}
 
 	//uncomment this after I actually migrate code from using assimp structures to own structures
 	//aiReleaseImport(scene);
@@ -195,21 +247,82 @@ ModelData load_mesh(const char* file_name) {
 	return modelData;
 }
 
+
+std::vector<Texture> loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName)
+{
+	std::vector<Texture> textures;
+	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
+	{
+		aiString str;
+		mat->GetTexture(type, i, &str);
+		Texture texture;
+		texture.id = TextureFromFile(str.C_Str(),"");
+		texture.type = typeName;
+		texture.path = str.C_Str();;
+		textures.push_back(texture);
+	}
+	return textures;
+}
+
+unsigned int TextureFromFile(const char *path, const std::string &directory, bool gamma)
+{
+	std::string filename = std::string(path);
+	//filename = directory + '/' + filename;
+
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+
+	int width, height, nrComponents;
+	unsigned char *data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
+	if (data)
+	{
+		GLenum format;
+		if (nrComponents == 1)
+			format = GL_RED;
+		else if (nrComponents == 3)
+			format = GL_RGB;
+		else if (nrComponents == 4)
+			format = GL_RGBA;
+
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		stbi_image_free(data);
+	}
+	else
+	{
+		std::cout << "Texture failed to load at path: " << path << std::endl;
+		stbi_image_free(data);
+	}
+
+	return textureID;
+}
+
 void BoneTransform(ModelData *modelData, float TimeInSeconds, std::vector<mat4>& Transforms)
 {
 	mat4 identity = identity_mat4();
+	if (modelData->scene->HasAnimations()) {
+		float TicksPerSecond = modelData->scene->mAnimations[0]->mTicksPerSecond != 0 ?
+			modelData->scene->mAnimations[0]->mTicksPerSecond : 24.0f;
+		float TimeInTicks = TimeInSeconds * TicksPerSecond;
+		float AnimationTime = fmod(TimeInTicks, modelData->scene->mAnimations[0]->mDuration);
 
-	float TicksPerSecond = modelData->scene->mAnimations[0]->mTicksPerSecond != 0 ?
-		modelData->scene->mAnimations[0]->mTicksPerSecond : 25.0f;
-	float TimeInTicks = TimeInSeconds * TicksPerSecond;
-	float AnimationTime = fmod(TimeInTicks, modelData->scene->mAnimations[0]->mDuration);
-
-	ReadNodeHeirarchy(modelData, AnimationTime, modelData->scene->mRootNode, identity);
+		ReadNodeHeirarchy(modelData, AnimationTime, modelData->scene->mRootNode, identity);
+	}
+	else {
+		printf("No animations found \n");
+	}
 
 	Transforms.resize(modelData->mBoneCount);
 
 	for (unsigned int i = 0; i < modelData->mBoneCount; i++) {
-		Transforms[i] = m_BoneInfo[i].finalTransform;
+		Transforms[i] = modelData->m_BoneInfo[i].finalTransform;
 		//print((const mat4&)m_BoneInfo[i].finalTransform);
 	}
 
@@ -219,11 +332,12 @@ void ReadNodeHeirarchy(ModelData *modelData, float AnimationTime, const aiNode* 
 {
 	std::string nodeName(pNode->mName.data);
 
-	const aiAnimation* pAnimation = modelData->scene->mAnimations[0];
+	//const aiAnimation* pAnimation = modelData->scene->mAnimations[0];
+	std::map<std::string, aiNodeAnim*> nodeAnimMapping = modelData->mAnimNodeVector[0];
 
 	mat4 nodeTransform = aiMatrix4x4ToMath(&(pNode->mTransformation));
 
-	const aiNodeAnim* pNodeAnim = FindNodeAnimation(pAnimation, nodeName);
+	const aiNodeAnim* pNodeAnim = nodeAnimMapping[nodeName];//FindNodeAnimation(pAnimation, nodeName);
 
 
 	mat4 translation = identity_mat4();
@@ -232,37 +346,49 @@ void ReadNodeHeirarchy(ModelData *modelData, float AnimationTime, const aiNode* 
 
 	if (pNodeAnim) {
 		// Interpolate scaling and generate scaling transformation matrix
-		//aiVector3D Scaling;
-		//CalcInterpolatedScaling(Scaling, AnimationTime, pNodeAnim);
-		//scaling = scale(scaling, vec3(Scaling.x, Scaling.y, Scaling.z));
+		aiVector3D Scaling;
+		CalcInterpolatedScaling(Scaling, AnimationTime, pNodeAnim);
+		scaling = scale(scaling, vec3(Scaling.x, Scaling.y, Scaling.z));
 
-		////// Interpolate rotation and generate rotation transformation matrix
-		//aiQuaternion RotationQ;
-		//CalcInterpolatedRotation(RotationQ, AnimationTime, pNodeAnim);
-		//aiMatrix3x3 rotationM = RotationQ.GetMatrix();
-		//mat3 tmpRotation = aiMatrix3x3ToMath(&rotationM);
-		//rotation = convertMat3to4(tmpRotation);
+		//// Interpolate rotation and generate rotation transformation matrix
+		aiQuaternion RotationQ;
+		CalcInterpolatedRotation(RotationQ, AnimationTime, pNodeAnim);
+		//RotationQ = pNodeAnim->mRotationKeys[0].mValue;
+		aiMatrix3x3 rotationM = RotationQ.GetMatrix();
+		mat3 tmpRotation = aiMatrix3x3ToMath(&rotationM);
+		rotation = convertMat3to4(tmpRotation);
+		//print(rotation);
 
-		//////// Interpolate translation and generate translation transformation matrix
-		//aiVector3D Translation;
-		//CalcInterpolatedPosition(Translation, AnimationTime, pNodeAnim);
-		//translation = translate(translation, vec3(Translation.x, Translation.y, Translation.z));
+
+		////// Interpolate translation and generate translation transformation matrix
+		aiVector3D Translation;
+		CalcInterpolatedPosition(Translation, AnimationTime, pNodeAnim);
+		//Translation = pNodeAnim->mPositionKeys[0].mValue;
+		translation = translate(translation, vec3(Translation.x, Translation.y, Translation.z));
+
 
 		// Combine the above transformations
 	}
 
 	nodeTransform = translation * rotation * scaling;
+
 	//print(nodeTransform);
+	//nodeTransform = rotate_x_deg(nodeTransform, 180);
+	/*printf("Fixed");
+	print(nodeTransform);
+	printf("\n");*/
 
 	mat4 globalTransform = ((mat4)ParentTransform) * nodeTransform;
 	//print(globalTransform);
 
-	if (m_BoneMapping.find(nodeName) != m_BoneMapping.end()) {
-		unsigned int boneIndex = m_BoneMapping[nodeName];
+	if (modelData->m_BoneMapping.find(nodeName) != modelData->m_BoneMapping.end()) {
+		unsigned int boneIndex = modelData->m_BoneMapping[nodeName];
 
-		m_BoneInfo[boneIndex].finalTransform = m_GlobalInverseTransform * 
-			globalTransform * m_BoneInfo[boneIndex].inverseBindPoseTransform;
-		m_BoneInfo[boneIndex].finalTransform = globalTransform;
+		modelData->m_BoneInfo[boneIndex].finalTransform = modelData->m_GlobalInverseTransform *
+			globalTransform * modelData->m_BoneInfo[boneIndex].inverseBindPoseTransform;
+		/*printf("Bone Name:%s model space coords:", nodeName.c_str());
+		print(globalTransform * modelData->m_BoneInfo[boneIndex].inverseBindPoseTransform);*/
+		//m_BoneInfo[boneIndex].finalTransform = globalTransform;
 		//print((const mat4&)globalTransform);
 		//print((const mat4&)m_BoneInfo[boneIndex].finalTransform);
 	}
@@ -341,6 +467,7 @@ void CalcInterpolatedPosition(aiVector3D& Out, float AnimationTime, const aiNode
 	}
 
 	unsigned int PositionIndex = FindPosition(AnimationTime, pNodeAnim);
+	//printf("start time%f \n", (float)(pNodeAnim->mPositionKeys[0].mTime));
 	unsigned int NextPositionIndex = (PositionIndex + 1);
 	//printf("%d\n", pNodeAnim->mNumPositionKeys);
 	if (!(NextPositionIndex < pNodeAnim->mNumPositionKeys)) {
@@ -350,7 +477,8 @@ void CalcInterpolatedPosition(aiVector3D& Out, float AnimationTime, const aiNode
 	float DeltaTime = (float)(pNodeAnim->mPositionKeys[NextPositionIndex].mTime - pNodeAnim->mPositionKeys[PositionIndex].mTime);
 	float Factor = (AnimationTime - (float)pNodeAnim->mPositionKeys[PositionIndex].mTime) / DeltaTime;
 	if (!(Factor >= 0.0f && Factor <= 1.0f)) {
-		printf("Error:Bad Time info");
+		printf("Error:Bad Time info. Animation time was:%d but next frame was at:%d\n", 
+				AnimationTime, (float)pNodeAnim->mPositionKeys[PositionIndex].mTime);
 		return;
 	}
 	const aiVector3D& Start = pNodeAnim->mPositionKeys[PositionIndex].mValue;
@@ -398,12 +526,14 @@ void CalcInterpolatedScaling(aiVector3D& Out, float AnimationTime, const aiNodeA
 	unsigned int NextScalingIndex = (ScalingIndex + 1);
 	if (!(NextScalingIndex < pNodeAnim->mNumScalingKeys)) {
 		printf("Error:out of scaling keyframes");
+		Out = aiVector3D(1.0, 1.0, 1.0);
 		return;
 	}
 	float DeltaTime = (float)(pNodeAnim->mScalingKeys[NextScalingIndex].mTime - pNodeAnim->mScalingKeys[ScalingIndex].mTime);
 	float Factor = (AnimationTime - (float)pNodeAnim->mScalingKeys[ScalingIndex].mTime) / DeltaTime;
 	if (!(Factor >= 0.0f && Factor <= 1.0f)) {
 		printf("Error:Bad Time info");
+		Out = aiVector3D(1.0, 1.0, 1.0);
 		return;
 	}
 	const aiVector3D& Start = pNodeAnim->mScalingKeys[ScalingIndex].mValue;
@@ -526,36 +656,45 @@ void generateObjectBufferMesh(Model *model) {
 	unsigned int vp_vbo = 0;
 	unsigned int vn_vbo = 0;
 	unsigned int vb_vbo = 0;
+	unsigned int vt_vbo = 0;
+
 
 	GLuint shaderProgramID = model->shaderProgramID;
 	GLuint loc1 = glGetAttribLocation(shaderProgramID, "vertex_position");
 	GLuint loc2 = glGetAttribLocation(shaderProgramID, "vertex_normal");
-	GLuint loc3 = glGetAttribLocation(shaderProgramID, "vertex_texture");
+	GLuint loc3 = glGetAttribLocation(shaderProgramID, "tex_coord");
 	GLuint loc4 = glGetAttribLocation(shaderProgramID, "bone_ids");
 	GLuint loc5 = glGetAttribLocation(shaderProgramID, "bone_weights");
 
 	glGenBuffers(1, &vp_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vp_vbo);
 	glBufferData(GL_ARRAY_BUFFER, mesh_data.mPointCount * sizeof(vec3), &mesh_data.mVertices[0], GL_STATIC_DRAW);
+
 	glGenBuffers(1, &vn_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vn_vbo);
 	glBufferData(GL_ARRAY_BUFFER, mesh_data.mPointCount * sizeof(vec3), &mesh_data.mNormals[0], GL_STATIC_DRAW);
+
+	// debugging code
+	/*for (int i = 0;i<mesh_data.Bones.size();i++) {
+		VertexBoneData currentBone = mesh_data.Bones[i];
+		unsigned int* boneId = currentBone.IDs;
+		float* weight = currentBone.Weights;
+		for (int j = 0; j < 4; j++) {
+			std::cout << "Bone Id:" << boneId[j] << "Weight:" << weight[j] << std::endl;
+		}
+		std::cout << "Current vertext done" << std::endl;
+	}*/
+	// debugging code complete
 
 	glGenBuffers(1, &vb_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vb_vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(mesh_data.Bones[0]) * mesh_data.Bones.size(), 
 		&mesh_data.Bones[0], GL_STATIC_DRAW);
 
-
-	
-
-
-
-	//	This is for texture coordinates which you don't currently need, so I have commented it out
-	/*unsigned int vt_vbo = 0;
+	//	This is for texture coordinates 
 	glGenBuffers(1, &vt_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
-	glBufferData(GL_ARRAY_BUFFER, mesh_data.mPointCount * sizeof(vec2), &mesh_data.mTextureCoords[0], GL_STATIC_DRAW);*/
+	glBufferData(GL_ARRAY_BUFFER, mesh_data.mPointCount * sizeof(vec2), &mesh_data.mTextureCoords[0], GL_STATIC_DRAW);
 
 	GLuint vao = model->vao;
 	glGenVertexArrays(1, &vao);
@@ -564,20 +703,118 @@ void generateObjectBufferMesh(Model *model) {
 	glEnableVertexAttribArray(loc1);
 	glBindBuffer(GL_ARRAY_BUFFER, vp_vbo);
 	glVertexAttribPointer(loc1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
 	glEnableVertexAttribArray(loc2);
 	glBindBuffer(GL_ARRAY_BUFFER, vn_vbo);
 	glVertexAttribPointer(loc2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-	glEnableVertexAttribArray(loc4);
+	//	This is for texture coordinates which you don't currently need, so I have commented it out
+	glEnableVertexAttribArray(loc3);
+	glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
+	glVertexAttribPointer(loc3, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+
+
 	glBindBuffer(GL_ARRAY_BUFFER, vb_vbo);
+	glEnableVertexAttribArray(loc4);
 	glVertexAttribIPointer(loc4, 4, GL_INT, sizeof(VertexBoneData), (const GLvoid*)0);
 	glEnableVertexAttribArray(loc5);
 	glVertexAttribPointer(loc5, 4, GL_FLOAT, GL_FALSE, sizeof(VertexBoneData), (const GLvoid*)16);
 
-	//	This is for texture coordinates which you don't currently need, so I have commented it out
-	/*glEnableVertexAttribArray(loc3);
-	glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
-	glVertexAttribPointer(loc3, 2, GL_FLOAT, GL_FALSE, 0, NULL);*/
 
 	model->vao = vao;
+}
+
+
+unsigned int loadCubemap(std::vector<std::string> faces)
+{
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+	int width, height, nrChannels;
+	for (unsigned int i = 0; i < faces.size(); i++)
+	{
+		unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+		if (data)
+		{
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+				0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+			);
+			stbi_image_free(data);
+		}
+		else
+		{
+			std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+			stbi_image_free(data);
+		}
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	return textureID;
+}
+
+void generateSkyBoxBufferMesh(SkyBox *sky) {
+	float skyboxVertices[] = {
+		// positions          
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		-1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f
+	};
+	unsigned int vp_vbo = 0;
+	GLuint shaderProgramID = sky->shaderProgramID;
+	GLuint loc1 = glGetAttribLocation(shaderProgramID, "vertex_position");
+	glGenBuffers(1, &vp_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vp_vbo);
+	sky->mPointCount = sizeof(skyboxVertices) / sizeof(vec3);
+	glBufferData(GL_ARRAY_BUFFER,sky->mPointCount*sizeof(vec3), &skyboxVertices, GL_STATIC_DRAW);
+
+	GLuint vao = sky->vao;
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+	glEnableVertexAttribArray(loc1);
+	glBindBuffer(GL_ARRAY_BUFFER, vp_vbo);
+	glVertexAttribPointer(loc1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	sky->vao = vao;
 }

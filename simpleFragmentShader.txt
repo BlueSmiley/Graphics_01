@@ -1,6 +1,90 @@
 #version 330
 
-in vec3 LightIntensity;
+// can calculate color in fragment shader if needed for phong shading
+in vec3 fragment_color, position_eye, normal_eye;
+in vec2 texCoord;
+
+// Do all this in fragmetn shader for phong shading
+vec3 LightPosition = vec3 (0.0, 10.0, 2.0); // Light position in world coords.
+
+vec3 Ls = vec3 (0.5, 0.5, 0.5); // white specular colour
+vec3 Ld = vec3 (0.7, 0.7, 0.7); // diffuse white colour
+vec3 La = vec3 (0.5, 0.5, 0.5); // grey ambient colour
+
+// surface reflectance
+vec3 Ks = vec3 (1.0, 1.0, 1.0); // fully reflect specular light
+vec3 Kd = vec3 (1.0, 0.5, 0.0); // orange diffuse surface reflectance
+vec3 Ka = vec3 (1.0, 1.0, 1.0); // fully reflect ambient light
+float specular_exponent = 10; // specular 'power'
+
+
+uniform sampler2D texture_diffuse1;
+uniform sampler2D texture_diffuse2;
+uniform sampler2D texture_diffuse3;
+uniform sampler2D texture_specular1;
+uniform sampler2D texture_specular2;
+uniform sampler2D texture_specular3;
+uniform mat4 view;
+
+uniform vec3 viewPos;
+in vec3 FragPos, world_normal;
+
+//number of levels
+//for diffuse color
+const int levels = 5;
+const float scaleFactor = 1.0 / levels;
+
+// Surround extremeties with fog for nice effect :)
+const vec3 fog_colour = vec3(0.2,0.2,0.2);
+
+const float min_fog_dist = 3.0;
+const float max_fog_dist = 10.0;
+
 void main(){
-	gl_FragColor = vec4 (LightIntensity, 1.0);
+	vec4 texture1 = texture(texture_diffuse1, texCoord);
+
+	// Lighting calculations
+    // ambient intensity
+    vec3 Ia = La * Ka;
+
+    // raise light position to eye space
+    vec3 light_position_eye = vec3(view*vec4(LightPosition,1.0));
+    //normalised vector towards the light source
+    vec3 direction_to_light_eye = normalize(LightPosition - position_eye);
+    //dot product gives us the cosine of angle between the vectors
+    float dot_prod = max(dot(direction_to_light_eye, normal_eye),0.0);
+    vec3 Id =  Ld*Kd* floor(dot_prod*levels) * scaleFactor; // diffuse intensity
+  
+    vec3 reflection_eye = reflect(-direction_to_light_eye, normal_eye);
+    vec3 surface_to_viewer_eye = normalize(-position_eye);
+    float dot_prod_specular = max(dot(reflection_eye, surface_to_viewer_eye),0);
+    float specular_factor = pow(dot_prod_specular, specular_exponent);
+    vec3 Is = Ls * Ks * specular_factor;
+	float specMask = (pow(dot_prod_specular, specular_exponent) > 0.4) ? 1 : 0;
+	Is = Is*specMask;
+
+	//Black color if dot product is smaller than 0.3 Used to add thick edge lines..doesn't work too well
+	//else keep the same colors
+	vec3 V = normalize( viewPos - FragPos);
+	float edgeDetection = (dot(V, world_normal) > 0.3) ? 1 : 0;
+
+    //final color
+    vec3 phong_fragment_color = vec3(Is + Id + Ia);
+
+	// Alpha blending a colour linearly based on distance essentially
+	// Slowly mixes a colour into the object being rendered based on distance
+	// Fog calculations
+	// work out distance from camera to point
+	float dist = length (-position_eye);
+	// get a fog factor (thickness of fog) based on the distance
+	float degree_of_envelopment = (dist - min_fog_dist) / (max_fog_dist - min_fog_dist);
+	// constrain the fog factor between 0 and 1
+	degree_of_envelopment = clamp (degree_of_envelopment, 0.0, 1.0);
+
+	// Use this for terrain shader to make it disappear into background
+	//vec3 final_frag_colour = mix(phong_fragment_color, fog_colour,degree_of_envelopment);
+	vec3 final_frag_colour = phong_fragment_color;
+
+	//gl_FragColor = texture1 * vec4 (fragment_color, 1.0);
+	gl_FragColor = texture1 * vec4 (final_frag_colour, 1.0);
 }
