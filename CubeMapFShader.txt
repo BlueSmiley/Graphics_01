@@ -1,0 +1,31 @@
+#version 330
+out vec4 FragColor;
+
+in vec3 normal_eye;
+in vec3 position_eye;
+
+uniform mat4 view;
+uniform samplerCube skybox;
+
+const vec3 cloud_color = vec3(0.6,0.6,0.6);
+const float cloud_thickness = 0.25;
+
+void main()
+{
+	/*	reflect ray around normal from eye to surface */
+	vec3 incident_eye = normalize (position_eye);
+	vec3 normal = normalize (normal_eye);
+
+	vec3 reflected = reflect(incident_eye,normal);
+	// convert from eye to world space
+	reflected = vec3 (inverse (view) * vec4 (reflected, 0.0));
+
+	// override in built alpha
+	// it also makes no sense for the skybox to be partially transparent i think
+	// what are you going to display beyond it
+	vec3 textureColor = texture (skybox, -reflected).xyz;
+	vec3 final_frag_color = mix(textureColor, cloud_color, cloud_thickness);
+
+	// inverse because cloud
+	FragColor = vec4 (final_frag_color, 1.0);
+}

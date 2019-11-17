@@ -5,17 +5,18 @@ in vec3 fragment_color, position_eye, normal_eye;
 in vec2 texCoord;
 
 // Do all this in fragmetn shader for phong shading
-vec3 LightPosition = vec3 (0.0, 10.0, 2.0); // Light position in world coords.
+vec3 LightPosition = vec3 (0.0, 100.0, 2.0); // Light position in world coords.
 
-vec3 Ls = vec3 (0.5, 0.5, 0.5); // white specular colour
-vec3 Ld = vec3 (0.7, 0.7, 0.7); // diffuse white colour
-vec3 La = vec3 (0.5, 0.5, 0.5); // grey ambient colour
+vec3 Ls = vec3 (1.0, 1.0, 1.0); // white specular colour
+vec3 Ld = vec3 (0.2, 0.2, 0.2); // diffuse white colour
+vec3 La = vec3 (0.7, 0.7, 0.7); // grey ambient colour
 
 // surface reflectance
-vec3 Ks = vec3 (1.0, 1.0, 1.0); // fully reflect specular light
-vec3 Kd = vec3 (1.0, 0.5, 0.0); // orange diffuse surface reflectance
+vec3 Ks = vec3 (0.0, 0.0, 0.0); // reflect very little specular light
+vec3 Kd = vec3 (0.0, 0.0, 0.0); // greenish-blue diffuse surface reflectance
 vec3 Ka = vec3 (1.0, 1.0, 1.0); // fully reflect ambient light
-float specular_exponent = 1; // specular 'power'
+// Prevent strong shines on ground
+float specular_exponent = 0.1; // specular 'power'
 
 
 uniform sampler2D texture_diffuse1;
@@ -35,9 +36,9 @@ const int levels = 5;
 const float scaleFactor = 1.0 / levels;
 
 // Surround extremeties with fog for nice effect :)
-const vec3 fog_colour = vec3(0.2,0.2,0.2);
+const vec3 fog_colour = vec3(0.3,0.3,0.3);
 
-const float min_fog_dist = 50.0;
+const float min_fog_dist = 5.0;
 const float max_fog_dist = 200.0;
 
 void main(){
@@ -53,7 +54,8 @@ void main(){
     vec3 direction_to_light_eye = normalize(LightPosition - position_eye);
     //dot product gives us the cosine of angle between the vectors
     float dot_prod = max(dot(direction_to_light_eye, normal_eye),0.0);
-    vec3 Id =  Ld*Kd* floor(dot_prod*levels) * scaleFactor; // diffuse intensity
+    //vec3 Id =  Ld*Kd* floor(dot_prod*levels) * scaleFactor; // diffuse intensity
+	vec3 Id =  Ld*Kd*dot_prod;
   
     vec3 reflection_eye = reflect(-direction_to_light_eye, normal_eye);
     vec3 surface_to_viewer_eye = normalize(-position_eye);
@@ -61,7 +63,7 @@ void main(){
     float specular_factor = pow(dot_prod_specular, specular_exponent);
     vec3 Is = Ls * Ks * specular_factor;
 	float specMask = (pow(dot_prod_specular, specular_exponent) > 0.4) ? 1 : 0;
-	Is = Is*specMask;
+	//Is = Is*specMask;
 
 	//Black color if dot product is smaller than 0.3 Used to add thick edge lines..doesn't work too well
 	//else keep the same colors
@@ -85,5 +87,6 @@ void main(){
 	vec3 final_frag_colour = mix(phong_fragment_color, fog_colour,degree_of_envelopment);
 	//vec3 final_frag_colour = phong_fragment_color;
 
+	//gl_FragColor = texture1 * vec4 (fragment_color, 1.0);
 	gl_FragColor = texture1 * vec4 (final_frag_colour, 1.0);
 }

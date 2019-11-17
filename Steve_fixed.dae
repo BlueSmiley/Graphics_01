@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <asset>
+    <contributor>
+      <author>Blender User</author>
+      <authoring_tool>Blender 2.79.0 commit date:2018-03-22, commit time:14:10, hash:f4dc9f9d68b</authoring_tool>
+    </contributor>
+    <created>2019-11-08T18:28:18</created>
+    <modified>2019-11-08T18:28:18</modified>
+    <unit name="meter" meter="1"/>
+    <up_axis>Z_UP</up_axis>
+  </asset>
+  <library_images/>
+  <library_effects>
+    <effect id="Steve-effect">
+      <profile_COMMON>
+        <technique sid="common">
+          <phong>
+            <emission>
+              <color sid="emission">0 0 0 1</color>
+            </emission>
+            <ambient>
+              <color sid="ambient">0 0 0 1</color>
+            </ambient>
+            <diffuse>
+              <color sid="diffuse">0.64 0.64 0.64 1</color>
+            </diffuse>
+            <specular>
+              <color sid="specular">0.5 0.5 0.5 1</color>
+            </specular>
+            <shininess>
+              <float sid="shininess">50</float>
+            </shininess>
+            <index_of_refraction>
+              <float sid="index_of_refraction">1</float>
+            </index_of_refraction>
+          </phong>
+        </technique>
+      </profile_COMMON>
+    </effect>
+  </library_effects>
+  <library_materials>
+    <material id="Steve-material" name="Steve">
+      <instance_effect url="#Steve-effect"/>
+    </material>
+  </library_materials>
+  <library_geometries>
+    <geometry id="Steve_Head-mesh" name="Steve_Head">
+      <mesh>
+        <source id="Steve_Head-mesh-positions">
+          <float_array id="Steve_Head-mesh-positions-array" count="36">-1 8.474035 1.006573 -1 6.474077 0.993383 -1 6.474077 0.993383 -1 8.474035 1.006573 1 8.474035 1.006573 0.999999 8.487225 -0.993383 -1 8.487224 -0.993383 -1 6.487268 -1.006573 1 8.474035 1.006573 1 6.487268 -1.006573 1 6.474078 0.993383 1 6.474078 0.993383</float_array>
+          <technique_common>
+            <accessor source="#Steve_Head-mesh-positions-array" count="12" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Steve_Head-mesh-normals">
+          <float_array id="Steve_Head-mesh-normals-array" count="36">-0.4091485 -0.4091399 0.8155993 0 -0.002198338 0.9999977 -0.4073537 0.4073449 0.8173941 0.57735 0.5811458 -0.5735299 0.4073538 0.4073449 0.8173941 -0.5773506 0.5811454 -0.5735299 0 -0.002198338 0.9999977 0.4091489 -0.4091398 0.8155992 -0.5773502 -0.5735301 -0.5811454 0.5773503 -0.57353 -0.5811455 0 -0.002198338 0.9999977 0 -0.002198338 0.9999977</float_array>
+          <technique_common>
+            <accessor source="#Steve_Head-mesh-normals-array" count="12" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Steve_Head-mesh-map-0">
+          <float_array id="Steve_Head-mesh-map-0-array" count="120">0.3759 0.503487 0.376673 0.749269 0.376673 0.749269 0.249146 0.755974 0.125829 0.999911 0.125457 0.755906 0.500661 0.750006 0.3759 0.503487 0.376673 0.749269 0.125829 0.999911 0.125457 0.755906 0.125457 0.755906 0.369216 0.761856 0.253952 0.991808 0.253952 0.761856 1 0 1 1 1 1 0.123832 0.501264 0.00209099 0.753476 0.001325964 0.503335 0.25078 0.50329 0.126238 0.747512 0.125687 0.503316 0.126238 0.747512 0.125687 0.503316 0.125687 0.503316 0.374877 0.506418 0.250104 0.747256 0.249306 0.504219 0.3759 0.503487 0.3759 0.503487 0.376673 0.749269 0.249146 0.755974 0.249112 0.999932 0.125829 0.999911 0.500661 0.750006 0.500024 0.502517 0.3759 0.503487 0.125829 0.999911 0.125829 0.999911 0.125457 0.755906 0.369216 0.761856 0.369216 0.991808 0.253952 0.991808 1 0 1 0 1 1 0.123832 0.501264 0.12418 0.750315 0.00209099 0.753476 0.25078 0.50329 0.251113 0.748845 0.126238 0.747512 0.126238 0.747512 0.126238 0.747512 0.125687 0.503316 0.374877 0.506418 0.374931 0.749621 0.250104 0.747256</float_array>
+          <technique_common>
+            <accessor source="#Steve_Head-mesh-map-0-array" count="60" stride="2">
+              <param name="S" type="float"/>
+              <param name="T" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="Steve_Head-mesh-vertices">
+          <input semantic="POSITION" source="#Steve_Head-mesh-positions"/>
+        </vertices>
+        <triangles material="Steve-material" count="20">
+          <input semantic="VERTEX" source="#Steve_Head-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#Steve_Head-mesh-normals" offset="1"/>
+          <input semantic="TEXCOORD" source="#Steve_Head-mesh-map-0" offset="2" set="0"/>
+          <p>1 0 0 3 1 1 0 2 2 5 3 3 0 2 4 4 4 5 6 5 6 1 0 7 0 2 8 0 2 9 8 6 10 4 4 11 10 7 12 7 8 13 9 9 14 10 7 15 2 10 16 1 0 17 11 11 18 3 1 19 2 10 20 9 9 21 4 4 22 10 7 23 4 4 24 11 11 25 10 7 26 7 8 27 5 3 28 9 9 29 1 0 30 2 10 31 3 1 32 5 3 33 6 5 34 0 2 35 6 5 36 7 8 37 1 0 38 0 2 39 3 1 40 8 6 41 10 7 42 1 0 43 7 8 44 10 7 45 11 11 46 2 10 47 11 11 48 8 6 49 3 1 50 9 9 51 5 3 52 4 4 53 4 4 54 8 6 55 11 11 56 7 8 57 6 5 58 5 3 59</p>
+        </triangles>
+      </mesh>
+    </geometry>
+    <geometry id="Steve_RLeg-mesh" name="Steve_RLeg">
+      <mesh>
+        <source id="Steve_RLeg-mesh-positions">
+          <float_array id="Steve_RLeg-mesh-positions-array" count="24">-0.521593 3.497354 4.51e-4 -0.521593 3.497354 1.136699 0.521593 3.497354 1.136699 0.521592 3.497354 4.51e-4 -0.521593 0.502646 4.51e-4 -0.521592 0.502646 1.136699 0.521593 0.502646 4.51e-4 0.521593 0.502646 1.136698</float_array>
+          <technique_common>
+            <accessor source="#Steve_RLeg-mesh-positions-array" count="8" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Steve_RLeg-mesh-normals">
+          <float_array id="Steve_RLeg-mesh-normals-array" count="24">-0.5773503 0.5773503 0.5773503 0.57735 0.5773504 -0.5773505 -0.5773503 0.5773503 -0.5773503 -0.5773504 -0.5773504 -0.5773501 0.5773504 -0.5773502 -0.5773503 -0.5773497 -0.5773505 0.5773507 0.5773506 0.5773503 0.5773501 0.5773507 -0.5773504 0.5773499</float_array>
+          <technique_common>
+            <accessor source="#Steve_RLeg-mesh-normals-array" count="8" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Steve_RLeg-mesh-map-0">
+          <float_array id="Steve_RLeg-mesh-map-0-array" count="72">0.123284 0.495731 0.06353795 0.374441 0.124564 0.372844 0.250211 0.001370966 0.190639 0.367806 0.250211 0.370491 8.07e-4 0.009619951 0.05951398 0.377727 0.05951398 0.009619951 8.78e-4 0.01007395 0.062985 0.373364 8.78e-4 0.373364 0.06537497 0.003472983 0.125158 0.37577 0.06558597 0.375905 0.130391 0.486732 0.177758 0.401205 0.179068 0.489942 0.123284 0.495731 0.06225895 0.497328 0.06353795 0.374441 0.250211 0.001370966 0.190639 -0.001313984 0.190639 0.367806 8.07e-4 0.009619951 8.07e-4 0.377727 0.05951398 0.377727 8.78e-4 0.01007395 0.062985 0.01007395 0.062985 0.373364 0.06537497 0.003472983 0.124947 0.003337979 0.125158 0.37577 0.130391 0.486732 0.129081 0.397994 0.177758 0.401205</float_array>
+          <technique_common>
+            <accessor source="#Steve_RLeg-mesh-map-0-array" count="36" stride="2">
+              <param name="S" type="float"/>
+              <param name="T" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="Steve_RLeg-mesh-vertices">
+          <input semantic="POSITION" source="#Steve_RLeg-mesh-positions"/>
+        </vertices>
+        <triangles material="Steve-material" count="12">
+          <input semantic="VERTEX" source="#Steve_RLeg-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#Steve_RLeg-mesh-normals" offset="1"/>
+          <input semantic="TEXCOORD" source="#Steve_RLeg-mesh-map-0" offset="2" set="0"/>
+          <p>1 0 0 3 1 1 0 2 2 4 3 3 1 0 4 0 2 5 4 3 6 3 1 7 6 4 8 5 5 9 2 6 10 1 0 11 7 7 12 3 1 13 2 6 14 6 4 15 5 5 16 4 3 17 1 0 18 2 6 19 3 1 20 4 3 21 5 5 22 1 0 23 4 3 24 0 2 25 3 1 26 5 5 27 7 7 28 2 6 29 7 7 30 6 4 31 3 1 32 6 4 33 7 7 34 5 5 35</p>
+        </triangles>
+      </mesh>
+    </geometry>
+    <geometry id="Steve_LArm-mesh" name="Steve_LArm">
+      <mesh>
+        <source id="Steve_LArm-mesh-positions">
+          <float_array id="Steve_LArm-mesh-positions-array" count="24">-0.548908 6.487525 -1.114329 -0.560913 5.351346 -1.110812 0.482139 5.340364 -1.098238 0.494144 6.476543 -1.101755 -0.512911 6.477874 -4.108805 -0.524916 5.341696 -4.105288 0.53014 6.466893 -4.096231 0.518135 5.330714 -4.092714</float_array>
+          <technique_common>
+            <accessor source="#Steve_LArm-mesh-positions-array" count="8" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Steve_LArm-mesh-normals">
+          <float_array id="Steve_LArm-mesh-normals-array" count="24">-0.5903162 -0.5693768 0.5721336 0.5764365 0.5730977 0.5824776 -0.5781164 0.5852535 0.5685595 -0.564237 0.5815323 -0.586052 0.5903158 0.5693772 -0.5721337 0.5781162 -0.5852535 -0.5685595 0.5642368 -0.5815329 0.5860516 -0.5764362 -0.5730978 -0.5824778</float_array>
+          <technique_common>
+            <accessor source="#Steve_LArm-mesh-normals-array" count="8" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Steve_LArm-mesh-map-0">
+          <float_array id="Steve_LArm-mesh-map-0-array" count="72">0.689339 0.380423 0.748748 0.495561 0.689934 0.495565 0.693834 0.001911997 0.753152 0.37525 0.691096 0.377156 0.691833 0.375361 0.749856 -0.002146959 0.69008 0.00395298 0.688328 0.374991 0.748819 5.8e-5 0.748819 0.369061 0.6876 0.004326999 0.752404 0.365834 0.688839 0.369572 0.81312 0.496101 0.759715 0.389343 0.814246 0.387968 0.689339 0.380423 0.748153 0.380419 0.748748 0.495561 0.693834 0.001911997 0.747501 0.008394956 0.753152 0.37525 0.691833 0.375361 0.75161 0.369261 0.749856 -0.002146959 0.688328 0.374991 0.688328 0.005987942 0.748819 5.8e-5 0.6876 0.004326999 0.751165 5.89e-4 0.752404 0.365834 0.81312 0.496101 0.757901 0.498796 0.759715 0.389343</float_array>
+          <technique_common>
+            <accessor source="#Steve_LArm-mesh-map-0-array" count="36" stride="2">
+              <param name="S" type="float"/>
+              <param name="T" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="Steve_LArm-mesh-vertices">
+          <input semantic="POSITION" source="#Steve_LArm-mesh-positions"/>
+        </vertices>
+        <triangles material="Steve-material" count="12">
+          <input semantic="VERTEX" source="#Steve_LArm-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#Steve_LArm-mesh-normals" offset="1"/>
+          <input semantic="TEXCOORD" source="#Steve_LArm-mesh-map-0" offset="2" set="0"/>
+          <p>1 0 0 3 1 1 0 2 2 4 3 3 1 0 4 0 2 5 0 2 6 6 4 7 4 3 8 1 0 9 7 5 10 2 6 11 7 5 12 3 1 13 2 6 14 4 3 15 7 5 16 5 7 17 1 0 18 2 6 19 3 1 20 4 3 21 5 7 22 1 0 23 0 2 24 3 1 25 6 4 26 1 0 27 5 7 28 7 5 29 7 5 30 6 4 31 3 1 32 4 3 33 6 4 34 7 5 35</p>
+        </triangles>
+      </mesh>
+    </geometry>
+    <geometry id="Steve_Body-mesh" name="Steve_Body">
+      <mesh>
+        <source id="Steve_Body-mesh-positions">
+          <float_array id="Steve_Body-mesh-positions-array" count="24">-0.521593 6.486256 -1.13161 -0.521593 6.486256 1.163829 0.521593 6.486256 1.163828 0.521592 6.486256 -1.131611 -0.521593 3.491547 -1.13161 -0.521592 3.491547 1.163829 0.521593 3.491547 -1.13161 0.521593 3.491547 1.163828</float_array>
+          <technique_common>
+            <accessor source="#Steve_Body-mesh-positions-array" count="8" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Steve_Body-mesh-normals">
+          <float_array id="Steve_Body-mesh-normals-array" count="24">-0.5773505 0.5773503 -0.57735 0.5773507 0.5773504 0.5773499 0.5773499 0.5773503 -0.5773507 -0.5773503 -0.5773503 -0.5773501 -0.5773501 0.5773502 0.5773506 0.5773504 -0.5773503 -0.5773502 -0.5773499 -0.5773504 0.5773507 0.5773505 -0.5773503 0.57735</float_array>
+          <technique_common>
+            <accessor source="#Steve_Body-mesh-normals-array" count="8" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Steve_Body-mesh-map-0">
+          <float_array id="Steve_Body-mesh-map-0-array" count="72">0.439419 0.501069 0.314588 0.373515 0.440962 0.380069 0.625501 0.005747973 0.505681 0.370022 0.622224 0.375264 0.5 -0.005171954 0.441207 0.370784 0.441206 -0.005171954 0.309159 -0.002508997 0.249632 0.373364 0.309159 0.373364 0.312738 0.372217 0.438887 2.39e-4 0.438887 0.372217 0.1836709 0.494358 0.129334 0.382434 0.185427 0.380179 0.439419 0.501069 0.313044 0.494516 0.314588 0.373515 0.625501 0.005747973 0.508958 5.06e-4 0.505681 0.370022 0.5 -0.005171954 0.5 0.370784 0.441207 0.370784 0.309159 -0.002508997 0.249632 -0.002508997 0.249632 0.373364 0.312738 0.372217 0.312738 2.39e-4 0.438887 2.39e-4 0.1836709 0.494358 0.127578 0.496613 0.129334 0.382434</float_array>
+          <technique_common>
+            <accessor source="#Steve_Body-mesh-map-0-array" count="36" stride="2">
+              <param name="S" type="float"/>
+              <param name="T" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="Steve_Body-mesh-vertices">
+          <input semantic="POSITION" source="#Steve_Body-mesh-positions"/>
+        </vertices>
+        <triangles material="Steve-material" count="12">
+          <input semantic="VERTEX" source="#Steve_Body-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#Steve_Body-mesh-normals" offset="1"/>
+          <input semantic="TEXCOORD" source="#Steve_Body-mesh-map-0" offset="2" set="0"/>
+          <p>0 0 0 2 1 1 3 2 2 4 3 3 1 4 4 0 0 5 4 3 6 3 2 7 6 5 8 5 6 9 2 1 10 1 4 11 2 1 12 6 5 13 3 2 14 4 3 15 7 7 16 5 6 17 0 0 18 1 4 19 2 1 20 4 3 21 5 6 22 1 4 23 4 3 24 0 0 25 3 2 26 5 6 27 7 7 28 2 1 29 2 1 30 7 7 31 6 5 32 4 3 33 6 5 34 7 7 35</p>
+        </triangles>
+      </mesh>
+    </geometry>
+    <geometry id="Steve_RArm-mesh" name="Steve_RArm">
+      <mesh>
+        <source id="Steve_RArm-mesh-positions">
+          <float_array id="Steve_RArm-mesh-positions-array" count="24">-0.548908 6.487525 4.131316 -0.560913 5.351346 4.134833 0.482139 5.340364 4.147407 0.494144 6.476543 4.143889 -0.512911 6.477874 1.136839 -0.524916 5.341696 1.140356 0.53014 6.466893 1.149413 0.518135 5.330714 1.15293</float_array>
+          <technique_common>
+            <accessor source="#Steve_RArm-mesh-positions-array" count="8" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Steve_RArm-mesh-normals">
+          <float_array id="Steve_RArm-mesh-normals-array" count="24">-0.5903159 -0.569377 0.5721337 0.5764368 0.5730978 0.582477 -0.5781155 0.5852538 0.5685601 -0.5642369 0.5815325 -0.5860518 0.5903156 0.5693774 -0.5721337 0.5781162 -0.5852535 -0.5685597 0.5642366 -0.5815327 0.586052 -0.5764361 -0.5730978 -0.5824778</float_array>
+          <technique_common>
+            <accessor source="#Steve_RArm-mesh-normals-array" count="8" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Steve_RArm-mesh-map-0">
+          <float_array id="Steve_RArm-mesh-map-0-array" count="72">0.811271 0.499729 0.759154 0.385918 0.810749 0.385914 0.748349 0.36456 0.691885 0.002076983 0.747193 0.001974999 0.69235 0.372208 0.755237 0.007034957 0.750468 0.372475 0.752226 0.003553986 0.690567 0.378607 0.688849 0.009757995 0.756694 0.36321 0.68895 0.008459985 0.756093 0.006956994 0.686919 0.378174 0.749289 0.500739 0.686282 0.500739 0.811271 0.499729 0.759676 0.499733 0.759154 0.385918 0.748349 0.36456 0.693041 0.364662 0.691885 0.002076983 0.69235 0.372208 0.697119 0.006767988 0.755237 0.007034957 0.752226 0.003553986 0.753944 0.372404 0.690567 0.378607 0.756694 0.36321 0.689552 0.364713 0.68895 0.008459985 0.686919 0.378174 0.749925 0.378174 0.749289 0.500739</float_array>
+          <technique_common>
+            <accessor source="#Steve_RArm-mesh-map-0-array" count="36" stride="2">
+              <param name="S" type="float"/>
+              <param name="T" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="Steve_RArm-mesh-vertices">
+          <input semantic="POSITION" source="#Steve_RArm-mesh-positions"/>
+        </vertices>
+        <triangles material="Steve-material" count="12">
+          <input semantic="VERTEX" source="#Steve_RArm-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#Steve_RArm-mesh-normals" offset="1"/>
+          <input semantic="TEXCOORD" source="#Steve_RArm-mesh-map-0" offset="2" set="0"/>
+          <p>1 0 0 3 1 1 0 2 2 4 3 3 1 0 4 0 2 5 4 3 6 3 1 7 6 4 8 1 0 9 7 5 10 2 6 11 7 5 12 3 1 13 2 6 14 4 3 15 7 5 16 5 7 17 1 0 18 2 6 19 3 1 20 4 3 21 5 7 22 1 0 23 4 3 24 0 2 25 3 1 26 1 0 27 5 7 28 7 5 29 7 5 30 6 4 31 3 1 32 4 3 33 6 4 34 7 5 35</p>
+        </triangles>
+      </mesh>
+    </geometry>
+    <geometry id="Steve_LLeg-mesh" name="Steve_LLeg">
+      <mesh>
+        <source id="Steve_LLeg-mesh-positions">
+          <float_array id="Steve_LLeg-mesh-positions-array" count="24">-0.521593 3.497354 -1.138887 -0.521593 3.497354 -0.002639949 0.521593 3.497354 -0.002639949 0.521592 3.497354 -1.138888 -0.521593 0.502646 -1.138887 -0.521592 0.502646 -0.002638995 0.521593 0.502646 -1.138887 0.521593 0.502646 -0.002639949</float_array>
+          <technique_common>
+            <accessor source="#Steve_LLeg-mesh-positions-array" count="8" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Steve_LLeg-mesh-normals">
+          <float_array id="Steve_LLeg-mesh-normals-array" count="24">-0.5773503 0.5773503 0.5773501 0.5773497 0.5773503 -0.5773508 -0.5773506 0.5773503 -0.57735 -0.5773505 -0.5773504 -0.57735 0.5773503 -0.5773504 -0.5773502 -0.5773497 -0.5773504 0.5773509 0.5773504 0.5773504 0.57735 0.5773505 -0.5773503 0.57735</float_array>
+          <technique_common>
+            <accessor source="#Steve_LLeg-mesh-normals-array" count="8" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Steve_LLeg-mesh-map-0">
+          <float_array id="Steve_LLeg-mesh-map-0-array" count="72">0.12279 0.486939 0.06209695 0.380523 0.122711 0.377515 0.250211 0.001370966 0.187955 0.370491 0.250211 0.373175 0.187525 7.1e-5 0.1259 0.370784 0.1259 7.1e-5 0.00375998 -0.00227499 0.05852997 0.367886 -0.00367397 0.36814 0.06804996 0.365241 0.122484 0.003934979 0.122484 0.365241 0.12915 0.496087 0.186982 0.384604 0.185797 0.496086 0.12279 0.486939 0.06217497 0.489947 0.06209695 0.380523 0.250211 0.001370966 0.187955 -0.001313984 0.187955 0.370491 0.187525 7.1e-5 0.187524 0.370784 0.1259 0.370784 0.00375998 -0.00227499 0.06596398 -0.002527952 0.05852997 0.367886 0.06804996 0.365241 0.06804996 0.003934979 0.122484 0.003934979 0.12915 0.496087 0.130335 0.384604 0.186982 0.384604</float_array>
+          <technique_common>
+            <accessor source="#Steve_LLeg-mesh-map-0-array" count="36" stride="2">
+              <param name="S" type="float"/>
+              <param name="T" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="Steve_LLeg-mesh-vertices">
+          <input semantic="POSITION" source="#Steve_LLeg-mesh-positions"/>
+        </vertices>
+        <triangles material="Steve-material" count="12">
+          <input semantic="VERTEX" source="#Steve_LLeg-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#Steve_LLeg-mesh-normals" offset="1"/>
+          <input semantic="TEXCOORD" source="#Steve_LLeg-mesh-map-0" offset="2" set="0"/>
+          <p>1 0 0 3 1 1 0 2 2 4 3 3 1 0 4 0 2 5 4 3 6 3 1 7 6 4 8 5 5 9 2 6 10 1 0 11 2 6 12 6 4 13 3 1 14 6 4 15 5 5 16 4 3 17 1 0 18 2 6 19 3 1 20 4 3 21 5 5 22 1 0 23 4 3 24 0 2 25 3 1 26 5 5 27 7 7 28 2 6 29 2 6 30 7 7 31 6 4 32 6 4 33 7 7 34 5 5 35</p>
+        </triangles>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_controllers/>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="Steve_Head" name="Steve_Head" type="NODE">
+        <matrix sid="transform">1 0 0 0 0 -1.62921e-7 -1 0 0 1 -1.62921e-7 0 0 0 0 1</matrix>
+        <instance_geometry url="#Steve_Head-mesh" name="Steve_Head">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="Steve-material" target="#Steve-material"/>
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
+      </node>
+      <node id="Steve_RLeg" name="Steve_RLeg" type="NODE">
+        <matrix sid="transform">1 0 0 0 0 -1.62921e-7 -1 0 0 1 -1.62921e-7 0 0 0 0 1</matrix>
+        <instance_geometry url="#Steve_RLeg-mesh" name="Steve_RLeg">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="Steve-material" target="#Steve-material"/>
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
+      </node>
+      <node id="Steve_LArm" name="Steve_LArm" type="NODE">
+        <matrix sid="transform">1 0 0 0 0 -1.62921e-7 -1 0 0 1 -1.62921e-7 0 0 0 0 1</matrix>
+        <instance_geometry url="#Steve_LArm-mesh" name="Steve_LArm">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="Steve-material" target="#Steve-material"/>
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
+      </node>
+      <node id="Steve_Body" name="Steve_Body" type="NODE">
+        <matrix sid="transform">1 0 0 0 0 -1.62921e-7 -1 0 0 1 -1.62921e-7 0 0 0 0 1</matrix>
+        <instance_geometry url="#Steve_Body-mesh" name="Steve_Body">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="Steve-material" target="#Steve-material"/>
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
+      </node>
+      <node id="Steve_RArm" name="Steve_RArm" type="NODE">
+        <matrix sid="transform">1 0 0 0 0 -1.62921e-7 -1 0 0 1 -1.62921e-7 0 0 0 0 1</matrix>
+        <instance_geometry url="#Steve_RArm-mesh" name="Steve_RArm">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="Steve-material" target="#Steve-material"/>
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
+      </node>
+      <node id="Steve_LLeg" name="Steve_LLeg" type="NODE">
+        <matrix sid="transform">1 0 0 0 0 -1.62921e-7 -1 0 0 1 -1.62921e-7 0 0 0 0 1</matrix>
+        <instance_geometry url="#Steve_LLeg-mesh" name="Steve_LLeg">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="Steve-material" target="#Steve-material"/>
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>

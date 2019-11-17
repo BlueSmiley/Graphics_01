@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <asset>
+    <contributor>
+      <author>Blender User</author>
+      <authoring_tool>Blender 2.79.0 commit date:2018-03-22, commit time:14:10, hash:f4dc9f9d68b</authoring_tool>
+    </contributor>
+    <created>2019-11-15T09:23:35</created>
+    <modified>2019-11-15T09:23:35</modified>
+    <unit name="meter" meter="1"/>
+    <up_axis>Z_UP</up_axis>
+  </asset>
+  <library_images/>
+  <library_effects>
+    <effect id="Material_001-effect">
+      <profile_COMMON>
+        <technique sid="common">
+          <phong>
+            <emission>
+              <color sid="emission">0 0 0 1</color>
+            </emission>
+            <ambient>
+              <color sid="ambient">0 0 0 1</color>
+            </ambient>
+            <diffuse>
+              <color sid="diffuse">0.64 0.64 0.64 1</color>
+            </diffuse>
+            <specular>
+              <color sid="specular">0.5 0.5 0.5 1</color>
+            </specular>
+            <shininess>
+              <float sid="shininess">50</float>
+            </shininess>
+            <index_of_refraction>
+              <float sid="index_of_refraction">1</float>
+            </index_of_refraction>
+          </phong>
+        </technique>
+      </profile_COMMON>
+    </effect>
+  </library_effects>
+  <library_materials>
+    <material id="Material_001-material" name="Material_001">
+      <instance_effect url="#Material_001-effect"/>
+    </material>
+  </library_materials>
+  <library_geometries>
+    <geometry id="Box-mesh" name="Box">
+      <mesh>
+        <source id="Box-mesh-positions">
+          <float_array id="Box-mesh-positions-array" count="24">0.5 -0.5 -0.5 0.5 -0.5 0.5 -0.5 -0.5 0.5 -0.5 -0.5 -0.5 -0.5 0.5 -0.5 -0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 -0.5</float_array>
+          <technique_common>
+            <accessor source="#Box-mesh-positions-array" count="8" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Box-mesh-normals">
+          <float_array id="Box-mesh-normals-array" count="18">0 -1 0 0 1 0 0 0 -1 -1 0 0 1 0 0 0 0 1</float_array>
+          <technique_common>
+            <accessor source="#Box-mesh-normals-array" count="6" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Box-mesh-map-0">
+          <float_array id="Box-mesh-map-0-array" count="72">0.59354 -3.03e-4 0.340409 0.2497929 0.340409 -3.03e-4 0.341672 0.50483 0.08596199 0.752417 0.08596199 0.50483 0.593337 0.249562 0.341137 0.499562 0.341137 0.249562 0.595141 0.753039 0.848302 0.509132 0.848302 0.753039 0.59475 0.502321 0.340409 0.752417 0.340409 0.502321 0.592683 0.75403 0.341044 1.004126 0.341044 0.75403 0.59354 -3.03e-4 0.59354 0.2497929 0.340409 0.2497929 0.341672 0.50483 0.341672 0.752417 0.08596199 0.752417 0.593337 0.249562 0.593337 0.499562 0.341137 0.499562 0.595141 0.753039 0.595141 0.509132 0.848302 0.509132 0.59475 0.502321 0.59475 0.752417 0.340409 0.752417 0.592683 0.75403 0.592683 1.004126 0.341044 1.004126</float_array>
+          <technique_common>
+            <accessor source="#Box-mesh-map-0-array" count="36" stride="2">
+              <param name="S" type="float"/>
+              <param name="T" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="Box-mesh-vertices">
+          <input semantic="POSITION" source="#Box-mesh-positions"/>
+        </vertices>
+        <triangles material="Material_001-material" count="12">
+          <input semantic="VERTEX" source="#Box-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#Box-mesh-normals" offset="1"/>
+          <input semantic="TEXCOORD" source="#Box-mesh-map-0" offset="2" set="0"/>
+          <p>1 0 0 3 0 1 0 0 2 5 1 3 7 1 4 4 1 5 3 2 6 7 2 7 0 2 8 4 3 9 2 3 10 5 3 11 0 4 12 6 4 13 1 4 14 1 5 15 5 5 16 2 5 17 1 0 18 2 0 19 3 0 20 5 1 21 6 1 22 7 1 23 3 2 24 4 2 25 7 2 26 4 3 27 3 3 28 2 3 29 0 4 30 7 4 31 6 4 32 1 5 33 6 5 34 5 5 35</p>
+        </triangles>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_controllers/>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="Box" name="Box" type="NODE">
+        <matrix sid="transform">1 0 0 0 0 -1.62921e-7 -1 0 0 1 -1.62921e-7 0 0 0 0 1</matrix>
+        <instance_geometry url="#Box-mesh" name="Box">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="Material_001-material" target="#Material_001-material"/>
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>
